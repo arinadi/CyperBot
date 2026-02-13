@@ -8,10 +8,16 @@ It leverages Android's Accessibility Services to capture telemetry (keystrokes, 
 The application is built as a **Headless Android Application** with a focus on stealth and persistence.
 
 ### Core Components
-*   **Telemetry Engine**: `AccessibilityService` implementation for event interception.
-*   **Persistence Layer**: Foreground Service (`specialUse` type) + `AlarmManager` for watchdog timers.
-*   **C2 Interface**: Long-polling client for Telegram Bot API.
-*   **Security Core**: Bouncy Castle / Android Keystore for cryptographic operations.
+*   **Telemetry Engine**: `AccessibilityService` implementation capturing keystrokes, app usage, and screen content.
+*   **Persistence Layer**: Room Database for local buffering.
+*   **C2 Interface**: Long-polling client for Telegram Bot API (Pending Phase 3).
+*   **Security Core**: Hybrid RSA-4096 + AES-256 scheme (Pending Phase 4).
+
+## Implementation Status
+- [x] **Phase 1: Core Telemetry** (Service, keylogger, screen scraper, local DB).
+- [ ] **Phase 2: Persistence & Stealth** (Hidden icon, FGS, JobScheduler).
+- [ ] **Phase 3: C2 Infrastructure** (Telegram Bot API integration).
+- [ ] **Phase 4: Security & Encryption** (RSA/AES, Code Obfuscation).
 
 ## Key Features
 1.  **Zero-Knowledge Privacy**: Client-side encryption ensures only the parent holds the decryption key.

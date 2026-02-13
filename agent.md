@@ -36,10 +36,10 @@ This document defines the context, rules, and architectural constraints for AI a
 ```text
 app/src/main/
 ├── java/com/zero/sentinel/
-│   ├── services/      # Accessibility, Foreground, and Job Services
-│   ├── receivers/     # Boot, DeviceAdmin receivers
-│   ├── ui/            # Onboarding Wizard Activities
-│   ├── data/          # Room DB, Repositories
+│   ├── services/      # SentinelAccessibilityService
+│   ├── telemetry/     # Processor, KeystrokeCapture, AppTracker, ScreenScraper
+│   ├── ui/            # MainActivity (Onboarding)
+│   ├── data/          # Room DB (AppDatabase, LogDao, LogEntry) & Repository
 │   ├── crypto/        # Encryption Utilities
 │   └── network/       # Telegram Bot API Client
 ├── res/               # Android Resources (Layouts, Strings)
