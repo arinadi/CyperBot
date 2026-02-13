@@ -33,7 +33,7 @@ class SentinelNotificationListener : NotificationListenerService() {
 
             scope.launch {
                 repository.insertLog(
-                    type = "NOTIFICATION",
+                    type = "N",
                     packageName = packageName,
                     content = "$title: $text"
                 )

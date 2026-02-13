@@ -72,8 +72,8 @@ class C2Worker(
         try {
             FileWriter(file).use { writer ->
                 logs.forEach { log ->
-                    val date = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(log.timestamp))
-                    writer.append("[$date] ${log.type} (${log.packageName}): ${log.content}\n")
+                    val date = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(log.timestamp))
+                    writer.append("$date | ${log.type} | ${log.packageName} | ${log.content}\n")
                 }
             }
 
