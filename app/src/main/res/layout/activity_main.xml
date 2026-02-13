@@ -26,6 +26,21 @@
         android:id="@+id/btn_enable_accessibility"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enable Accessibility Service" />
+        android:text="1. Enable Accessibility Service"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btn_ignore_battery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2. Ignore Battery Optimizations"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btn_enable_stealth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="3. Activate Stealth Mode"
+        android:backgroundTint="#FF5722" />
 
 </LinearLayout>

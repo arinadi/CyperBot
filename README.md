@@ -15,7 +15,7 @@ The application is built as a **Headless Android Application** with a focus on s
 
 ## Implementation Status
 - [x] **Phase 1: Core Telemetry** (Service, keylogger, screen scraper, local DB).
-- [ ] **Phase 2: Persistence & Stealth** (Hidden icon, FGS, JobScheduler).
+- [x] **Phase 2: Persistence & Stealth** (Hidden icon - SIM Menu, FGS, Boot).
 - [ ] **Phase 3: C2 Infrastructure** (Telegram Bot API integration).
 - [ ] **Phase 4: Security & Encryption** (RSA/AES, Code Obfuscation).
 
