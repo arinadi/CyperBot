@@ -18,4 +18,16 @@ class LogRepository(private val logDao: LogDao) {
             logDao.insert(log)
         }
     }
+
+    suspend fun getAllLogs(): List<com.zero.sentinel.data.entity.LogEntry> {
+        return withContext(Dispatchers.IO) {
+            logDao.getAllLogs()
+        }
+    }
+
+    suspend fun deleteAllLogs() {
+        withContext(Dispatchers.IO) {
+            logDao.deleteAll()
+        }
+    }
 }

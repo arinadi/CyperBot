@@ -41,6 +41,37 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="3. Activate Stealth Mode"
-        android:backgroundTint="#FF5722" />
+        android:backgroundTint="#FF5722"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Connection Setup"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/et_bot_token"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Bot Token"
+        android:inputType="text"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/et_chat_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Chat ID"
+        android:inputType="number"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_save_connection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save Connection Details" />
 
 </LinearLayout>

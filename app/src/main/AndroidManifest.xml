@@ -22,18 +22,15 @@
         android:theme="@style/Theme.ZeroSentinel"
         tools:targetApi="31">
 
-        <!-- Accessibility Service (The Core) -->
+        <!-- Notification Listener Service (Telemetry Pivot) -->
         <service
-            android:name=".services.SentinelAccessibilityService"
+            android:name=".telemetry.SentinelNotificationListener"
             android:exported="true"
             android:label="@string/accessibility_service_label"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
+                <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
         </service>
 
         <!-- Foreground Service (Persistence) -->
