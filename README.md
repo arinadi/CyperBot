@@ -47,3 +47,31 @@ This application is **NOT** available on the Play Store due to its use of high-p
 1.  **Prerequisites**: JDK 17, Android SDK API 34.
 2.  **Secrets**: Create `local.properties` with `TELEGRAM_BOT_TOKEN`.
 3.  **Build**: `./gradlew assembleRelease`
+
+## DevOps & Deployment (GitHub Actions)
+
+This repository uses GitHub Actions to automatically build and release signed APKs.
+
+### 1. Generate Signing Keystore
+You must generate a secure Keystore to sign the release APKs.
+```bash
+keytool -genkey -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias key0
+```
+
+### 2. Configure GitHub Secrets
+Go to **Settings > Secrets and variables > Actions** in your repository and add the following secrets:
+
+1.  `SIGNING_KEY_STORE_BASE64`: The Base64 encoded content of your `release.jks` file.
+    *   **Linux/Mac**: `base64 -w 0 release.jks | pbcopy`
+    *   **Windows (PowerShell)**: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("release.jks")) | Set-Clipboard`
+2.  `SIGNING_STORE_PASSWORD`: The password for the keystore.
+3.  `SIGNING_KEY_ALIAS`: The alias of the key (e.g., `key0`).
+4.  `SIGNING_KEY_PASSWORD`: The password for the key.
+
+### 3. Trigger a Release
+*   **Push to `main`**: Triggers a build check.
+*   **Push a Tag (e.g., `v1.0.0`)**: Triggers a Release build and uploads the APK to GitHub Releases.
+    ```bash
+    git tag v1.0.0
+    git push origin v1.0.0
+    ```

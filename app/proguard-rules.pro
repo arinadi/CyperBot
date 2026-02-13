@@ -11,3 +11,15 @@
 
 # Keep Encryption utilities
 -keep class com.zero.sentinel.crypto.** { *; }
+
+# Keep WorkManager Workers (instantiated via reflection)
+-keep class com.zero.sentinel.workers.** { *; }
+
+# Keep BroadcastReceivers
+-keep class com.zero.sentinel.receivers.** { *; }
+
+# Keep Data classes used by Gson (Network models)
+-keep class com.zero.sentinel.network.models.** { *; }
+
+# Keep UI components (Activities/Fragments) referenced in Manifest
+-keep class com.zero.sentinel.ui.** { *; }
