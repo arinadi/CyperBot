@@ -12,7 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.zero.sentinel.R
-import com.zero.sentinel.services.SentinelAccessibilityService
+
 
 import android.content.ComponentName
 import android.content.pm.PackageManager
