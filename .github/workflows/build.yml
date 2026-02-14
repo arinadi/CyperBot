@@ -12,6 +12,10 @@ on:
       - main
       - master
 
+
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Release APK
