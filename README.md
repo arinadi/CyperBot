@@ -44,7 +44,7 @@ This application is **NOT** available on the Play Store due to its use of high-p
 4.  (Optional) Send `/hide` to vanish from the launcher.
 
 ## Build Instructions
-1.  **Prerequisites**: JDK 17, Android SDK API 34.
+1.  **Prerequisites**: JDK 21, Android SDK API 34.
 2.  **Secrets**: Create `local.properties` with `TELEGRAM_BOT_TOKEN`.
 3.  **Build**: `./gradlew assembleRelease`
 
@@ -69,7 +69,7 @@ Go to **Settings > Secrets and variables > Actions** in your repository and add 
 4.  `SIGNING_KEY_PASSWORD`: The password for the key.
 
 ### 3. Trigger a Release
-*   **Push to `main`**: Triggers a build check.
+*   **Push to `master`**: Triggers a build check.
 *   **Push a Tag (e.g., `v1.0.0`)**: Triggers a Release build and uploads the APK to GitHub Releases.
     ```bash
     git tag v1.0.0

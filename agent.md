@@ -10,7 +10,7 @@ This document defines the context, rules, and architectural constraints for AI a
 
 ## Technical Stack
 *   **Language**: Kotlin (Strict typing, Coroutines).
-*   **Build System**: Gradle functionality (Kotlin DSL recommended).
+*   **Build System**: Gradle 8.12 (Wrapper with JDK 21).
 *   **Architecture**: MVVM (Model-View-ViewModel) with Clean Architecture principles.
 *   **Database**: Room (SQLite) with Write-Ahead Logging (WAL).
 *   **Networking**: OkHttp (Bot API Client).
