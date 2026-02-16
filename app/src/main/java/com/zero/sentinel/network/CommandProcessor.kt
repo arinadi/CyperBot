@@ -37,7 +37,7 @@ class CommandProcessor(
                     val message = update.getAsJsonObject("message")
                     if (message.has("text")) {
                         val text = message.get("text").asString
-                        val chatId = message.get("chat").asJsonObject.get("id").asString
+
                         
                         // Security check: Only execute commands from configured chat
                         // (Assuming client/prefs ensures we only talk to right chat, but good to check)
