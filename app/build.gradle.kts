@@ -1,3 +1,6 @@
+import java.util.Date
+import java.text.SimpleDateFormat
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -12,8 +15,9 @@ android {
         applicationId = "com.zero.sentinel"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        val timestamp = System.currentTimeMillis()
+        versionCode = (timestamp / 10000).toInt()
+        versionName = "1.0.${SimpleDateFormat("yyMMddHHmm").format(Date(timestamp))}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
