@@ -30,12 +30,27 @@ class TelegramClient(context: Context) {
         val baseUrl = getBaseUrl() ?: return
         val chatId = prefs.getChatId() ?: return
 
-        val url = "$baseUrl/sendMessage?chat_id=$chatId&text=$text"
-        val request = Request.Builder().url(url).build()
+        val requestBody = okhttp3.FormBody.Builder()
+            .add("chat_id", chatId)
+            .add("text", text)
+            .add("parse_mode", "Markdown")
+            .build()
+
+        val request = Request.Builder()
+            .url("$baseUrl/sendMessage")
+            .post(requestBody)
+            .build()
 
         try {
-            client.newCall(request).execute().close()
-        } catch (e: IOException) {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val errorBody = response.body?.string()
+                    Log.e("TelegramClient", "SendMessage failed: ${response.code} - $errorBody")
+                } else {
+                    Log.d("TelegramClient", "SendMessage success: ${response.code}")
+                }
+            }
+        } catch (e: Exception) {
             Log.e("TelegramClient", "Failed to send message", e)
         }
     }

@@ -91,6 +91,7 @@ class MainActivity : AppCompatActivity() {
 
         // Test Connection
         testButton.setOnClickListener {
+            Log.d("MainActivity", "Test Connection button clicked")
             val token = botTokenInput.text.toString()
             val chat = chatIdInput.text.toString()
 
@@ -104,9 +105,11 @@ class MainActivity : AppCompatActivity() {
                 val info = DeviceInfoHelper.getDeviceInfo()
                 
                 CoroutineScope(Dispatchers.IO).launch {
+                    Log.d("MainActivity", "Sending test message via TelegramClient")
                     client.sendMessage("🔔 *TEST CONNECTION*\n\n$info")
                 }
-            } else {
+            } else {            
+                Log.w("MainActivity", "Test Connection failed: Token or Chat ID empty")
                 Toast.makeText(this, "Please enter both Token and Chat ID", Toast.LENGTH_SHORT).show()
             }
         }
