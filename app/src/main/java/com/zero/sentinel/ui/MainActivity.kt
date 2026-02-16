@@ -106,8 +106,15 @@ class MainActivity : AppCompatActivity() {
                 val info = DeviceInfoHelper.getDeviceInfo()
                 
                 CoroutineScope(Dispatchers.IO).launch {
-                    Log.d("MainActivity", "Sending test message via TelegramClient")
-                    client.sendMessage("🔔 *TEST CONNECTION*\n\n$info")
+                    Log.d("MainActivity", "Verifying token...")
+                    val botInfo = client.testToken()
+                    
+                    if (botInfo != null) {
+                        Log.d("MainActivity", "Token OK. Sending test message...")
+                        client.sendMessage("🔔 *TEST CONNECTION*\n\n$info")
+                    } else {
+                        Log.e("MainActivity", "Token Verification FAILED. Check Bot Token.")
+                    }
                 }
             } else {            
                 Log.w("MainActivity", "Test Connection failed: Token or Chat ID empty")

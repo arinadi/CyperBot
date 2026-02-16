@@ -105,4 +105,24 @@ class TelegramClient(context: Context) {
             null
         }
     }
+
+    fun testToken(): String? {
+        val baseUrl = getBaseUrl() ?: return null
+        val request = Request.Builder().url("$baseUrl/getMe").build()
+        return try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    Log.d("TelegramClient", "Token valid. Bot info: $body")
+                    body
+                } else {
+                    Log.e("TelegramClient", "Token invalid or network error: ${response.code}")
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("TelegramClient", "testToken failed", e)
+            null
+        }
+    }
 }
