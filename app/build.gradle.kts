@@ -81,7 +81,7 @@ android {
         variant.outputs
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
-                output.outputFileName = "CyperBot-${variant.versionName}.apk"
+                output.outputFileName = "CyperBot-${variant.versionName}-${variant.name}.apk"
             }
     }
 }
