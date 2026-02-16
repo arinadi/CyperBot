@@ -21,6 +21,8 @@ class SentinelNotificationListener : NotificationListenerService() {
         Log.d("SentinelNLS", "Notification Listener Created")
     }
 
+    private var lastNotificationHash: Int = 0
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         sbn?.let { notification ->
@@ -28,14 +30,23 @@ class SentinelNotificationListener : NotificationListenerService() {
             val extras = notification.notification.extras
             val title = extras.getString("android.title") ?: "No Title"
             val text = extras.getCharSequence("android.text")?.toString() ?: "No Text"
+            
+            val content = "$title: $text"
+            val currentHash = (packageName + content).hashCode()
 
-            Log.i("SentinelNLS", "Notification: $packageName - $title: $text")
+            if (currentHash == lastNotificationHash) {
+                Log.v("SentinelNLS", "Duplicate notification ignored: $packageName - $content")
+                return
+            }
+            lastNotificationHash = currentHash
+
+            Log.i("SentinelNLS", "Notification: $packageName - $content")
 
             scope.launch {
                 repository.insertLog(
                     type = "N",
                     packageName = packageName,
-                    content = "$title: $text"
+                    content = content
                 )
             }
         }

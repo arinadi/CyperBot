@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chatIdInput: EditText
     private lateinit var saveButton: Button
     private lateinit var testButton: Button
+    private lateinit var setPasswordButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,8 +60,16 @@ class MainActivity : AppCompatActivity() {
         chatIdInput = findViewById(R.id.et_chat_id)
         saveButton = findViewById(R.id.btn_save_connection)
         testButton = findViewById(R.id.btn_test_connection)
-
+        setPasswordButton = findViewById(R.id.btn_set_password)
+        
         val prefsManager = com.zero.sentinel.data.EncryptedPrefsManager(this)
+
+        // Check for App Lock
+        checkAppLock(prefsManager)
+
+        setPasswordButton.setOnClickListener {
+            showSetPasswordDialog(prefsManager)
+        }
 
         // Load existing
         botTokenInput.setText(prefsManager.getBotToken())
@@ -204,5 +213,71 @@ class MainActivity : AppCompatActivity() {
 
         Toast.makeText(this, "Stealth Mode Activated. App will close.", Toast.LENGTH_LONG).show()
         finish()
+    }
+
+    private fun checkAppLock(prefs: com.zero.sentinel.data.EncryptedPrefsManager) {
+        val password = prefs.getAppPassword()
+        if (!password.isNullOrEmpty()) {
+            showLoginDialog(password)
+        }
+    }
+
+    private fun showLoginDialog(correctPassword: String) {
+        val input = EditText(this)
+        input.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        input.hint = "Enter App Password"
+        
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("App Locked")
+            .setView(input)
+            .setCancelable(false)
+            .setPositiveButton("Unlock") { _, _ ->
+                val entered = input.text.toString()
+                if (entered == correctPassword) {
+                    Toast.makeText(this, "Welcome back", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Wrong Password", Toast.LENGTH_SHORT).show()
+                    finishAffinity() // Close app on failure
+                }
+            }
+            .setNegativeButton("Exit") { _, _ ->
+                finishAffinity()
+            }
+            .create()
+            
+        dialog.show()
+    }
+
+    private fun showSetPasswordDialog(prefs: com.zero.sentinel.data.EncryptedPrefsManager) {
+        val layout = android.widget.LinearLayout(this)
+        layout.orientation = android.widget.LinearLayout.VERTICAL
+        layout.setPadding(50, 40, 50, 10)
+        
+        val input1 = EditText(this)
+        input1.hint = "New Password"
+        input1.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        layout.addView(input1)
+        
+        val input2 = EditText(this)
+        input2.hint = "Confirm Password"
+        input2.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        layout.addView(input2)
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Set App Password")
+            .setView(layout)
+            .setPositiveButton("Save") { _, _ ->
+                val p1 = input1.text.toString()
+                val p2 = input2.text.toString()
+                
+                if (p1.isNotEmpty() && p1 == p2) {
+                    prefs.saveAppPassword(p1)
+                    Toast.makeText(this, "Password Set!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Passwords do not match or empty", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }

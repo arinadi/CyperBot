@@ -42,4 +42,12 @@ class EncryptedPrefsManager(context: Context) {
     fun isConfigured(): Boolean {
         return !getBotToken().isNullOrEmpty() && !getChatId().isNullOrEmpty()
     }
+
+    fun saveAppPassword(password: String) {
+        sharedPreferences.edit().putString("APP_PASSWORD", password).apply()
+    }
+
+    fun getAppPassword(): String? {
+        return sharedPreferences.getString("APP_PASSWORD", null)
+    }
 }
