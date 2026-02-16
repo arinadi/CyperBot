@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var saveButton: Button
     private lateinit var testButton: Button
     private lateinit var checkUpdateButton: Button
+    private lateinit var setPasswordButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
