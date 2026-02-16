@@ -50,4 +50,12 @@ class EncryptedPrefsManager(context: Context) {
     fun getAppPassword(): String? {
         return sharedPreferences.getString("APP_PASSWORD", null)
     }
+
+    fun saveLastUpdateId(updateId: Long) {
+        sharedPreferences.edit().putLong("LAST_UPDATE_ID", updateId).apply()
+    }
+
+    fun getLastUpdateId(): Long {
+        return sharedPreferences.getLong("LAST_UPDATE_ID", 0)
+    }
 }

