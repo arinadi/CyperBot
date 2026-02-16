@@ -15,9 +15,30 @@ android {
         applicationId = "com.zero.sentinel"
         minSdk = 26
         targetSdk = 34
-        val timestamp = System.currentTimeMillis()
-        versionCode = (timestamp / 10000).toInt()
-        versionName = "1.0.${SimpleDateFormat("yyMMddHHmm").format(Date(timestamp))}"
+        // Git-based Versioning
+        fun getGitCommitCount(): Int {
+            return try {
+                val process = ProcessBuilder("git", "rev-list", "--count", "HEAD").start()
+                process.inputStream.bufferedReader().readText().trim().toInt()
+            } catch (e: Exception) {
+                1 // Fallback
+            }
+        }
+
+        fun getGitCommitHash(): String {
+            return try {
+                val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD").start()
+                process.inputStream.bufferedReader().readText().trim()
+            } catch (e: Exception) {
+                "unknown"
+            }
+        }
+
+        val commitCount = getGitCommitCount()
+        val commitHash = getGitCommitHash()
+
+        versionCode = commitCount
+        versionName = "1.$commitCount.$commitHash"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
