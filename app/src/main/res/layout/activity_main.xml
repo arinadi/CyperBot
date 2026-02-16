@@ -57,6 +57,14 @@
             android:layout_marginBottom="8dp"/>
 
         <Button
+            android:id="@+id/btn_check_update"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Check for Update"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="#009688"/>
+
+        <Button
             android:id="@+id/btn_set_password"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -69,7 +77,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Bot Token"
-            android:inputType="text"
+            android:inputType="textPassword"
             android:layout_marginBottom="8dp"/>
 
         <EditText
@@ -77,7 +85,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Chat ID"
-            android:inputType="numberSigned"
+            android:inputType="textPassword"
             android:layout_marginBottom="8dp"/>
 
         <Button

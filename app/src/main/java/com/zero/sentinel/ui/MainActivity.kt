@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chatIdInput: EditText
     private lateinit var saveButton: Button
     private lateinit var testButton: Button
-    private lateinit var setPasswordButton: Button
+    private lateinit var checkUpdateButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +61,7 @@ class MainActivity : AppCompatActivity() {
         saveButton = findViewById(R.id.btn_save_connection)
         testButton = findViewById(R.id.btn_test_connection)
         setPasswordButton = findViewById(R.id.btn_set_password)
+        checkUpdateButton = findViewById(R.id.btn_check_update) // Bind
         
         val prefsManager = com.zero.sentinel.data.EncryptedPrefsManager(this)
 
@@ -71,9 +72,19 @@ class MainActivity : AppCompatActivity() {
             showSetPasswordDialog(prefsManager)
         }
 
+        // Check for Update
+        checkUpdateButton.setOnClickListener {
+            Toast.makeText(this, "Checking for updates...", Toast.LENGTH_SHORT).show()
+            val updater = com.zero.sentinel.network.GithubUpdater(this)
+            CoroutineScope(Dispatchers.IO).launch {
+                updater.checkAndInstallUpdate()
+            }
+        }
+
         // Load existing
         botTokenInput.setText(prefsManager.getBotToken())
         chatIdInput.setText(prefsManager.getChatId())
+        // ... (rest of the file)
 
         // Save Connection
         saveButton.setOnClickListener {
