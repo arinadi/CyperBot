@@ -40,6 +40,8 @@ class TelegramClient(context: Context) {
             .url("$baseUrl/sendMessage")
             .post(requestBody)
             .build()
+        
+        Log.d("TelegramClient", "Sending message to chat_id: $chatId, content: $text")
 
         try {
             client.newCall(request).execute().use { response ->
