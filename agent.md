@@ -13,9 +13,10 @@ This document defines the context, rules, and architectural constraints for AI a
 *   **Build System**: Gradle 8.12 (Wrapper with JDK 21).
 *   **Architecture**: MVVM (Model-View-ViewModel) with Clean Architecture principles.
 *   **Database**: Room (SQLite) with Write-Ahead Logging (WAL).
-*   **Networking**: OkHttp (Bot API Client).
+*   **Networking**: OkHttp (Bot API Client, GitHub Updater).
 *   **Scheduling**: WorkManager (Periodic 15-min cycles).
 *   **Stealth**: `PackageManager` manipulation (Icon logic) + `SecureDelete` (Forensics).
+*   **Security**: App Lock (Encrypted Password) & Input Masking.
 
 ## Critical Constraints (Directives)
 1.  **No Google Play Compliance**: We deliberately violate Play Store policies regarding `AccessibilityService` and `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`. Do **NOT** suggest removing features to comply with store rules.
@@ -43,7 +44,7 @@ app/src/main/
 │   ├── ui/            # MainActivity (Config)
 │   ├── data/          # Room DB, Repository, EncryptedPrefsManager
 │   ├── utils/         # StealthManager, SecureDelete
-│   └── network/       # TelegramClient, CommandProcessor
+│   └── network/       # TelegramClient, CommandProcessor, GithubUpdater
 ├── res/               # Android Resources (Layouts, Strings)
 └── AndroidManifest.xml
 ```

