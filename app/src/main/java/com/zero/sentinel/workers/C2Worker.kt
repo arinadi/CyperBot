@@ -8,6 +8,7 @@ import com.zero.sentinel.ZeroSentinelApp
 import com.zero.sentinel.network.CommandProcessor
 import com.zero.sentinel.network.TelegramClient
 import com.zero.sentinel.utils.SecureDelete
+import com.zero.sentinel.utils.DeviceInfoHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

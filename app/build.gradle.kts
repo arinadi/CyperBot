@@ -40,7 +40,7 @@ android {
         versionCode = commitCount
         versionName = "2.$commitCount.$commitHash"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         
         // Room schema export location
         ksp {
@@ -114,9 +114,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-service:2.7.0")
 
-    // Testing
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.mockito:mockito-core:5.10.0")
-    testImplementation("org.mockito:mockito-inline:5.2.0")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
 }

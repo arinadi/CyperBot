@@ -12,7 +12,8 @@ import kotlinx.coroutines.launch
 class CommandProcessor(
     private val context: android.content.Context,
     private val repository: LogRepository,
-    private val client: TelegramClient
+    private val client: TelegramClient,
+    private val prefs: com.zero.sentinel.data.EncryptedPrefsManager = com.zero.sentinel.data.EncryptedPrefsManager(context)
 ) {
     private val gson = Gson()
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -72,7 +73,7 @@ class CommandProcessor(
             command.startsWith("/setpin ") -> {
                 val newPin = command.substringAfter("/setpin ").trim()
                 if (newPin.isNotEmpty() && newPin.all { it.isDigit() }) {
-                    val prefs = com.zero.sentinel.data.EncryptedPrefsManager(context)
+                    // val prefs = com.zero.sentinel.data.EncryptedPrefsManager(context) // Removed
                     prefs.saveAppPassword(newPin)
                     client.sendMessage("PIN updated to: $newPin")
                 } else {
@@ -93,7 +94,7 @@ class CommandProcessor(
         val action = parts.getOrNull(1)?.lowercase()
         val target = parts.getOrNull(2)
 
-        val prefs = com.zero.sentinel.data.EncryptedPrefsManager(context)
+        // val prefs = com.zero.sentinel.data.EncryptedPrefsManager(context) // Removed, using injected 'prefs'
         val currentExceptions = prefs.getNotificationExceptions().toMutableSet()
 
         when (action) {
