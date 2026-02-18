@@ -46,6 +46,14 @@
             android:layout_height="wrap_content"
             android:text="3. Activate Stealth Mode"
             android:backgroundTint="#FF5722"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btn_enable_admin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4. Enable Uninstall Protection"
+            android:backgroundTint="#D32F2F"
             android:layout_marginBottom="24dp"/>
 
         <TextView

