@@ -37,6 +37,16 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private lateinit var adminButton: Button
+    private lateinit var statusText: TextView
+    private lateinit var enableButton: Button
+    private lateinit var batteryButton: Button
+    private lateinit var stealthButton: Button
+    private lateinit var checkUpdateButton: Button
+    private lateinit var setPasswordButton: Button
+    private lateinit var botTokenInput: EditText
+    private lateinit var chatIdInput: EditText
+    private lateinit var saveButton: Button
+    private lateinit var testButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
