@@ -65,6 +65,7 @@ jobs:
           COMMIT_HASH=$(git rev-parse --short HEAD)
           VERSION_NAME="1.$COMMIT_COUNT.$COMMIT_HASH"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "Computed Version: $VERSION_NAME"
 
       - name: Create Release
@@ -74,8 +75,8 @@ jobs:
           files: |
             app/build/outputs/apk/release/*.apk
             app/build/outputs/apk/debug/*.apk
-          tag_name: v${{ env.VERSION_NAME }}
-          name: Release v${{ env.VERSION_NAME }}
+          tag_name: v${{ steps.version.outputs.VERSION_NAME }}
+          name: Release v${{ steps.version.outputs.VERSION_NAME }}
           prerelease: false
 
         env:

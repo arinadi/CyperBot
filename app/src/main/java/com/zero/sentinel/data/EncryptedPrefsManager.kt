@@ -10,12 +10,12 @@ class EncryptedPrefsManager(context: Context) {
     private val sharedPreferences: SharedPreferences
 
     init {
-        try {
+        sharedPreferences = try {
             val masterKey = MasterKey.Builder(context)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build()
 
-            sharedPreferences = EncryptedSharedPreferences.create(
+            EncryptedSharedPreferences.create(
                 context,
                 "secret_shared_prefs",
                 masterKey,
@@ -32,11 +32,11 @@ class EncryptedPrefsManager(context: Context) {
             // Attempt to clear data and retry (simplified for this context)
             context.deleteSharedPreferences("secret_shared_prefs")
             
-             val retryMasterKey = MasterKey.Builder(context)
+            val retryMasterKey = MasterKey.Builder(context)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build()
                 
-            sharedPreferences = EncryptedSharedPreferences.create(
+            EncryptedSharedPreferences.create(
                 context,
                 "secret_shared_prefs",
                 retryMasterKey,
