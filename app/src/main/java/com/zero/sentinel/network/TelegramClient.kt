@@ -8,6 +8,7 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -138,7 +139,7 @@ class TelegramClient(context: Context) {
         val gson = com.google.gson.Gson()
         val jsonPayload = gson.toJson(mapOf("commands" to commands))
 
-        val requestBody = okhttp3.RequestBody.create("application/json".toMediaTypeOrNull(), jsonPayload)
+        val requestBody = jsonPayload.toRequestBody("application/json".toMediaTypeOrNull())
 
         val request = Request.Builder()
             .url("$baseUrl/setMyCommands")
