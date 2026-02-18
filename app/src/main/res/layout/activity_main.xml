@@ -1,107 +1,195 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fitsSystemWindows="true">
 
-    <LinearLayout
+    <!-- Main Content -->
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:gravity="center">
+        android:layout_height="match_parent"
+        android:background="@color/slate_950">
 
-        <TextView
-            android:id="@+id/tv_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="System Monitor Status: Inactive"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="This app requires Accessibility Service to function."
-            android:textAlignment="center"
-            android:layout_marginBottom="24dp"/>
-
-        <Button
-            android:id="@+id/btn_enable_accessibility"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="1. Enable Accessibility Service"
-            android:layout_marginBottom="16dp"/>
-
-        <Button
-            android:id="@+id/btn_ignore_battery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="2. Ignore Battery Optimizations"
-            android:layout_marginBottom="16dp"/>
-
-
-
-        <Button
-            android:id="@+id/btn_enable_admin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="4. Enable Uninstall Protection"
-            android:backgroundTint="#D32F2F"
-            android:layout_marginBottom="24dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Connection Setup"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
-
-        <Button
-            android:id="@+id/btn_check_update"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Check for Update"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#009688"/>
-
-        <Button
-            android:id="@+id/btn_set_password"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Set App Password"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#673AB7"/>
-
-        <EditText
-            android:id="@+id/et_bot_token"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Bot Token"
-            android:inputType="textPassword"
-            android:layout_marginBottom="8dp"/>
+            android:layout_height="match_parent"
+            android:padding="24dp">
 
-        <EditText
-            android:id="@+id/et_chat_id"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Chat ID"
-            android:inputType="textPassword"
-            android:layout_marginBottom="8dp"/>
+            <!-- Top Bar -->
+            <ImageView
+                android:id="@+id/btn_menu"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                app:tint="@color/slate_400"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="16dp"
+                android:contentDescription="Menu" />
+            
+            <ImageView
+                android:id="@+id/icon_status"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_lock_idle_lock" 
+                app:tint="@color/indigo_accent"
+                android:background="@drawable/bg_input_dark"
+                android:padding="6dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/btn_menu"
+                app:layout_constraintBottom_toBottomOf="@id/btn_menu"/>
 
-        <Button
-            android:id="@+id/btn_save_connection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Save Connection Details" />
+            <!-- CONFIGURASI BOT Title -->
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Konfigurasi Bot"
+                android:textColor="@color/white"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toBottomOf="@id/btn_menu"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/card_config"
+                app:layout_constraintVertical_bias="0.4"
+                />
 
-        <Button
-            android:id="@+id/btn_test_connection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Test Connection"
-            android:layout_marginTop="16dp"/>
+            <TextView
+                android:id="@+id/tv_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Update kredensial API Telegram Anda."
+                android:textColor="@color/slate_400"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tv_title"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
 
-    </LinearLayout>
-</ScrollView>
+            <!-- Main Card -->
+            <LinearLayout
+                android:id="@+id/card_config"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card_dark"
+                android:padding="24dp"
+                android:elevation="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tv_subtitle"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="32dp"
+                app:layout_constraintVertical_bias="0.0">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BOT TOKEN"
+                    android:textColor="@color/slate_500"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"/>
+
+                <EditText
+                    android:id="@+id/et_bot_token"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_input_dark"
+                    android:hint="123456:ABC-DEF..."
+                    android:textColorHint="@color/slate_500"
+                    android:textColor="@color/slate_300"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textSize="14sp"
+                    android:inputType="text"
+                    android:layout_marginBottom="20dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CHAT ID"
+                    android:textColor="@color/slate_500"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"/>
+
+                <EditText
+                    android:id="@+id/et_chat_id"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_input_dark"
+                    android:hint="-100123456789"
+                    android:textColorHint="@color/slate_500"
+                    android:textColor="@color/slate_300"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textSize="14sp"
+                    android:inputType="numberSigned"
+                    android:layout_marginBottom="24dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btn_test"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:text="Test"
+                        android:textColor="@color/slate_400"
+                        android:background="@drawable/btn_ghost_slate"
+                        android:textAllCaps="false"
+                        android:textSize="16sp"
+                        android:layout_marginEnd="12dp"
+                        style="?android:attr/borderlessButtonStyle"/>
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btn_save"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1.5"
+                        android:text="Simpan"
+                        android:textColor="@color/white"
+                        android:background="@drawable/btn_primary_indigo"
+                        android:textAllCaps="false"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:drawableStart="@android:drawable/ic_menu_save"
+                        android:drawableTint="@color/white"
+                        android:paddingStart="24dp"
+                        android:paddingEnd="24dp"
+                        style="?android:attr/borderlessButtonStyle"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <!-- Sidebar -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/slate_900"
+        app:itemTextColor="@color/slate_300"
+        app:itemIconTint="@color/indigo_accent"
+        app:itemShapeFillColor="@color/slate_800"
+        app:menu="@menu/drawer_menu"
+        app:headerLayout="@layout/nav_header_main" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

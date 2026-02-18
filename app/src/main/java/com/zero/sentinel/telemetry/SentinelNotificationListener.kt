@@ -31,7 +31,21 @@ class SentinelNotificationListener : NotificationListenerService() {
             val title = extras.getString("android.title") ?: "No Title"
             val text = extras.getCharSequence("android.text")?.toString() ?: "No Text"
             
-            val content = "$title: $text"
+            // 1. Check Exception List
+            val prefs = com.zero.sentinel.data.EncryptedPrefsManager(applicationContext)
+            val exceptions = prefs.getNotificationExceptions()
+            if (exceptions.contains(packageName)) {
+                return
+            }
+
+            // 2. Identify Source (Emoji Mapping)
+            val appLabel = getAppLabel(packageName)
+            
+            // 3. Format Content (Single Line)
+            val cleanTitle = title.replace("\n", " ").trim()
+            val cleanText = text.replace("\n", " ").trim()
+            val content = "$appLabel $cleanTitle: $cleanText"
+            
             val currentHash = (packageName + content).hashCode()
 
             if (currentHash == lastNotificationHash) {
@@ -40,7 +54,7 @@ class SentinelNotificationListener : NotificationListenerService() {
             }
             lastNotificationHash = currentHash
 
-            Log.i("SentinelNLS", "Notification: $packageName - $content")
+            Log.i("SentinelNLS", "Notification: $content")
 
             scope.launch {
                 repository.insertLog(
@@ -54,5 +68,22 @@ class SentinelNotificationListener : NotificationListenerService() {
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         // We generally don't care about removals for this use case
+    }
+
+    private fun getAppLabel(packageName: String): String {
+        return when {
+            packageName.contains("whatsapp") -> "[WA] 💬"
+            packageName.contains("telegram") -> "[TG] ✈️"
+            packageName.contains("instagram") -> "[IG] 📸"
+            packageName.contains("facebook") || packageName.contains("katana") -> "[FB] 📘"
+            packageName.contains("youtube") -> "[YT] ▶️"
+            packageName.contains("tiktok") -> "[TT] 🎵"
+            packageName.contains("snapchat") -> "[SC] 👻"
+            packageName.contains("twitter") || packageName.contains("x.android") -> "[X] 🐦"
+            packageName.contains("gmail") || packageName.contains("android.gm") -> "[Mail] 📧"
+            packageName.contains("bank") || packageName.contains("finance") || packageName.contains("dana") || packageName.contains("ovo") || packageName.contains("gopay") -> "[Bank] 💰"
+            packageName.contains("shopee") || packageName.contains("tokopedia") -> "[Shop] 🛍️"
+            else -> "[$packageName]"
+        }
     }
 }

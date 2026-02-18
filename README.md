@@ -1,78 +1,85 @@
-# Zero-Sentinel
+<p align="center">
+  <h1 align="center">Zero-Sentinel</h1>
+  <p align="center">
+    <strong>Absolute Privacy. Granular Monitoring. Full Vibe Coding.</strong>
+  </p>
+</p>
 
-Zero-Sentinel is a "Zero-Knowledge" Android parental control ecosystem designed for absolute privacy and granular monitoring. Unlike commercial solutions that rely on cloud storage and invasive data practices, Zero-Sentinel operates as a self-contained, side-loaded agent.
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/arinadi/CyperBot/build.yml?branch=master&style=for-the-badge&logo=github&label=Build" alt="Build Status">
+  <img src="https://img.shields.io/badge/Kotlin-ASDS?style=for-the-badge&logo=kotlin&logoColor=white&color=7F52FF" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Android-34+-green.svg?style=for-the-badge&logo=android&logoColor=white&color=3DDC84" alt="Android Support">
+</p>
 
-It leverages Android's **NotificationListenerService** to capture telemetry (messages, alerts) and stores them locally before secure transmission. The application is designed to be **Serverless**, utilizing the Telegram Bot API as a resilient Command & Control (C2) infrastructure.
+Zero-Sentinel (Internal: **CyperBot**) adalah ekosistem parental control Android yang dirancang dengan filosofi "Zero-Knowledge". Project ini lahir dari **keresahan pribadi** terhadap solusi monitoring komersial yang seringkali mengabaikan privasi data dan memiliki infrastruktur yang berat.
 
-## Technical Documentation
+Project ini dikerjakan dengan pendekatan **Full Vibe Coding**—di mana setiap baris kode ditulis bukan sekadar untuk memenuhi requirement, tapi untuk mencapai harmoni antara efisiensi, estetika antarmuka, dan ketangguhan sistem. 
 
-### Architecture
-The application is built as a **Headless Android Application** with a focus on stealth and persistence.
+Berbeda dengan solusi lain yang bergantung pada cloud storage, Zero-Sentinel beroperasi secara mandiri menggunakan Telegram Bot API sebagai infrastruktur Command & Control (C2) yang tangguh dan terenkripsi.
 
+---
 
+## 🛠️ Main Features
 
-### Core Components
-*   **Telemetry Engine**: `SentinelNotificationListener` capturing incoming messages and alerts independently of UI.
-*   **Intelligence Engine**: Passive Monitoring (WiFi/Location) triggered by `C2Worker` cycles.
-*   **C2 Interface**: `C2Worker` (WorkManager) operating on a 15-minute periodic cycle for silent uploads and command polling.
-*   **Stealth Engine**: `SIMMenuActivity` (Decoy UI), `StealthManager` (Icon Hiding), and `SecureDelete` (Forensics).
-*   **Security Core**: Encrypted Preferences (AES-256) and `SentinelDeviceAdminReceiver` (Uninstall Protection).
+| Feature | Description |
+| :--- | :--- |
+| **🎭 Stealth Decoy** | Menyamar sebagai "SIM Menu". Akses UI asli melalui PIN rahasia. |
+| **📡 Passive Monitoring** | Logging WiFi SSID & GPS secara periodik setiap 15 menit. |
+| **🛡️ Resilience** | Menggunakan WorkManager & Device Admin agar tetap aktif di background. |
+| **🧹 Data Hygiene** | Penghapusan log secara aman (secure wipe) setelah berhasil upload. |
+| **🤖 Serverless** | Memanfaatkan Telegram sebagai C2, tanpa biaya VPS. |
+| **🔒 Secure Access** | Manajemen PIN jarak jauh & enkripsi AES-256 lokal. |
 
-## Key Features
-1.  **Stealth Decoy**: App disguised as "SIM Menu" with a fake UI. Access real app via secret PIN.
-2.  **Passive Monitoring**: Silently logs WiFi SSID and GPS Location (from photos) every 15 minutes.
-3.  **Resilience**: Uses `WorkManager` for guaranteed background execution and **Device Admin** to prevent uninstallation.
-4.  **Data Hygiene**: Logs are securely wiped (overwritten with zeros) immediately after successful upload.
-5.  **Serverless**: Uses Telegram as the C2 infrastructure, removing the need for VPS maintenance.
-6.  **Secure Access**: Remote PIN management and local App Lock (AES-256) to prevent unauthorized access.
+---
 
-## Commands
-Control the agent via your Telegram Bot:
-*   `/ping`: Check status. Returns next scheduled wake-up time.
-*   `/wipe`: Force delete all local logs and database records.
-*   `/setpin <PIN>`: Remotely change the app access PIN.
+## 🏗️ Architecture
 
-## Installation (Side-Loading)
-This application is **NOT** available on the Play Store due to its use of high-privilege APIs.
-1.  Download the latest APK from Releases.
-2.  Install and open **"SIM Menu"**.
-3.  Click **"Help and Support"** and enter default PIN **`123123`**.
-4.  Follow the "Onboarding Wizard" to grant permissions:
-    *   **Notification Access**: Required for telemetry.
-    *   **Ignore Battery Opts**: Required for background persistence.
-    *   **Uninstall Protection**: Enable Device Admin to prevent removal.
-5.  Enter your Telegram Bot Token and Chat ID.
-6.  **Set App Password**: Change the default PIN immediately.
-
-## Build Instructions
-1.  **Prerequisites**: JDK 21, Android SDK API 34.
-2.  **Secrets**: Create `local.properties` with `TELEGRAM_BOT_TOKEN`.
-3.  **Build**: `./gradlew assembleRelease`
-
-## DevOps & Deployment (GitHub Actions)
-
-This repository uses GitHub Actions to automatically build and release signed APKs.
-
-### 1. Generate Signing Keystore
-You must generate a secure Keystore to sign the release APKs.
-```bash
-keytool -genkey -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias key0
+```mermaid
+graph TD
+    A[Android Device] -->|Telemetry| B(NotificationListener)
+    A -->|Heartbeat| C(WorkManager)
+    B --> D[(Room Database)]
+    C -->|Secure JSON| E[Telegram Bot API]
+    E -->|Remote Command| C
+    D -->|Secure Delete| A
 ```
 
-### 2. Configure GitHub Secrets
-Go to **Settings > Secrets and variables > Actions** in your repository and add the following secrets:
+---
 
-1.  `SIGNING_KEY_STORE_BASE64`: The Base64 encoded content of your `release.jks` file.
-    *   **Linux/Mac**: `base64 -w 0 release.jks | pbcopy`
-    *   **Windows (PowerShell)**: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("release.jks")) | Set-Clipboard`
-2.  `SIGNING_STORE_PASSWORD`: The password for the keystore.
-3.  `SIGNING_KEY_ALIAS`: The alias of the key (e.g., `key0`).
-4.  `SIGNING_KEY_PASSWORD`: The password for the key.
+## 🚀 Technical Documentation
 
-### 3. Trigger a Release
-*   **Push to `master`**: Triggers a build check.
-*   **Push a Tag (e.g., `v1.0.0`)**: Triggers a Release build and uploads the APK to GitHub Releases.
-    ```bash
-    git tag v1.0.0
-    git push origin v1.0.0
-    ```
+### Core Components
+*   **Telemetry Engine**: `SentinelNotificationListener` menangkap pesan & alert secara independen.
+*   **C2 Interface**: `C2Worker` (WorkManager) melakukan polling & upload setiap 15 menit secara senyap.
+*   **Stealth Engine**: `SIMMenuActivity` (Decoy), `StealthManager` (Icon Hiding), & `SecureDelete`.
+*   **Security Core**: `EncryptedSharedPreferences` (AES-256) & `SentinelDeviceAdminReceiver`.
+
+### Commands (C2)
+Kendalikan agent melalui Telegram Bot:
+*   `/ping`: Cek status & jadwal wake-up berikutnya. Returns "Pong!" dan log terakhir.
+*   `/wipe`: Paksa penghapusan seluruh log & records database di perangkat.
+*   `/setpin <PIN>`: Ubah PIN akses aplikasi secara remote.
+
+---
+
+## 📦 Installation & Setup
+
+1.  **Download**: Ambil APK terbaru dari [Releases](https://github.com/arinadi/CyperBot/releases).
+2.  **Open "SIM Menu"**: Klik **"Help and Support"** dan masukkan PIN default `123123`.
+3.  **Onboarding**: Berikan izin yang diminta (Notification Access, Battery Opts, Device Admin).
+4.  **Configure**: Masukkan Telegram Bot Token & Chat ID Anda.
+5.  **Secure**: Segera ubah default PIN melalui menu settings.
+
+---
+
+## 🛠️ Build from Source
+
+1.  **Prerequisites**: JDK 21, Android SDK API 34.
+2.  **Secrets**: Tambahkan `TELEGRAM_BOT_TOKEN` di `local.properties`.
+3.  **Command**: `./gradlew assembleRelease`
+
+---
+
+<p align="center">
+  <i>Developed with ❤️ and a lot of vibes. Project ID: <code>Zero-Sentinel</code></i>
+</p>

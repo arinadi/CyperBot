@@ -79,8 +79,70 @@ class CommandProcessor(
                     client.sendMessage("Invalid PIN. Use digits only.")
                 }
             }
+            command.startsWith("/exception") -> {
+                handleExceptionCommand(command)
+            }
             else -> {
                 // Ignore unknown
+            }
+        }
+    }
+
+    private fun handleExceptionCommand(command: String) {
+        val parts = command.split(" ")
+        val action = parts.getOrNull(1)?.lowercase()
+        val target = parts.getOrNull(2)
+
+        val prefs = com.zero.sentinel.data.EncryptedPrefsManager(context)
+        val currentExceptions = prefs.getNotificationExceptions().toMutableSet()
+
+        when (action) {
+            "add" -> {
+                if (!target.isNullOrEmpty()) {
+                    if (currentExceptions.add(target)) {
+                        prefs.saveNotificationExceptions(currentExceptions)
+                        client.sendMessage("✅ Added to exceptions: $target")
+                    } else {
+                        client.sendMessage("⚠️ Already in exceptions: $target")
+                    }
+                } else {
+                    client.sendMessage("Usage: /exception add <package_name>")
+                }
+            }
+            "remove", "delete" -> {
+                if (!target.isNullOrEmpty()) {
+                    if (currentExceptions.remove(target)) {
+                        prefs.saveNotificationExceptions(currentExceptions)
+                        client.sendMessage("🗑️ Removed from exceptions: $target")
+                    } else {
+                        client.sendMessage("⚠️ Not found in exceptions: $target")
+                    }
+                } else {
+                    client.sendMessage("Usage: /exception delete <package_name>")
+                }
+            }
+            "list" -> {
+                if (currentExceptions.isEmpty()) {
+                    client.sendMessage("Exceptions list is empty.")
+                } else {
+                    val listStr = currentExceptions.joinToString("\n") { "- $it" }
+                    client.sendMessage("🚫 **Notification Exceptions:**\n$listStr")
+                }
+            }
+            "wipe", "clear" -> {
+                prefs.saveNotificationExceptions(emptySet())
+                client.sendMessage("🔥 Exception list wiped!")
+            }
+            else -> {
+                client.sendMessage(
+                    """
+                    Usage:
+                    /exception add <pkg>
+                    /exception delete <pkg>
+                    /exception list
+                    /exception wipe
+                    """.trimIndent()
+                )
             }
         }
     }

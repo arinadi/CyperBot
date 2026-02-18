@@ -81,4 +81,20 @@ class EncryptedPrefsManager(context: Context) {
     fun getLastUpdateId(): Long {
         return sharedPreferences.getLong("LAST_UPDATE_ID", 0)
     }
+
+    fun saveNotificationExceptions(packages: Set<String>) {
+        // We use a simple comma-separated string or JSON to avoid weird Set issues with EncryptedSharedPreferences
+        val json = com.google.gson.Gson().toJson(packages)
+        sharedPreferences.edit().putString("NOTIF_EXCEPTIONS", json).apply()
+    }
+
+    fun getNotificationExceptions(): Set<String> {
+        val json = sharedPreferences.getString("NOTIF_EXCEPTIONS", "[]") ?: "[]"
+        val type = object : com.google.gson.reflect.TypeToken<Set<String>>() {}.type
+        return try {
+            com.google.gson.Gson().fromJson(json, type) ?: emptySet()
+        } catch (e: Exception) {
+            emptySet()
+        }
+    }
 }

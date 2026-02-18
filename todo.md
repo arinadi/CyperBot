@@ -1,5 +1,0 @@
-- saat click help, munculkan pesan insert pin. samarkan dengan kata2 lain.
-- masih ada tombol stealth mode, hapus saja.
-- aplikasi force close, cek adb logcat.
-- cek update, download berhasil tapi install gagal. apa karena di emulator?
-- 

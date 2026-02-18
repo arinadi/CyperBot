@@ -30,8 +30,10 @@ This document defines the context, rules, and architectural constraints for AI a
 *   **Error Handling**: Fail silently in background workers. Reschedule (`Result.retry()`), don't crash.
 
 ## Development Workflow
+*   **Philosophy**: **Full Vibe Coding**—prioritizing intuition, aesthetic harmony, and functional purity.
 *   **Branching**: `master` is the source of truth. Feature branches should be merged via PR (if applicable) or direct push for solo dev.
 *   **Commits**: Semantic messages (e.g., `feat: add stealth manager`, `fix: worker constraints`).
+*   **Documentation**: Maintain a rich `README.md` with visual architecture and clear feature grids.
 *   **Deployment**: GitHub Actions builds the Release APK.
 
 ## File Structure Overview
