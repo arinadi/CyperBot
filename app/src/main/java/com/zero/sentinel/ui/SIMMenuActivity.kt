@@ -44,6 +44,7 @@ class SIMMenuActivity : AppCompatActivity() {
     private fun showPinDialog() {
         val input = EditText(this)
         input.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        input.filters = arrayOf(android.text.InputFilter.LengthFilter(6))
         input.layoutParams = android.widget.LinearLayout.LayoutParams(
             android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
             android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
@@ -74,6 +75,7 @@ class SIMMenuActivity : AppCompatActivity() {
         
         if (pin == correctPin) {
             val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("EXTRA_AUTHENTICATED", true)
             startActivity(intent)
             finish()
         } else {

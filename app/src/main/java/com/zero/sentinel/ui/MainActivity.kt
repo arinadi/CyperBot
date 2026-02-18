@@ -68,7 +68,10 @@ class MainActivity : AppCompatActivity() {
         val prefsManager = com.zero.sentinel.data.EncryptedPrefsManager(this)
 
         // Check for App Lock
-        checkAppLock(prefsManager)
+        val alreadyAuthenticated = intent.getBooleanExtra("EXTRA_AUTHENTICATED", false)
+        if (!alreadyAuthenticated) {
+            checkAppLock(prefsManager)
+        }
 
         setPasswordButton.setOnClickListener {
             showSetPasswordDialog(prefsManager)
@@ -268,8 +271,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun showLoginDialog(correctPassword: String) {
         val input = EditText(this)
-        input.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-        input.hint = "Enter App Password"
+        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        input.filters = arrayOf(android.text.InputFilter.LengthFilter(6))
+        input.hint = "Enter 6-digit PIN"
         
         val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("App Locked")
@@ -298,13 +302,15 @@ class MainActivity : AppCompatActivity() {
         layout.setPadding(50, 40, 50, 10)
         
         val input1 = EditText(this)
-        input1.hint = "New Password"
-        input1.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        input1.hint = "New 6-digit PIN"
+        input1.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        input1.filters = arrayOf(android.text.InputFilter.LengthFilter(6))
         layout.addView(input1)
         
         val input2 = EditText(this)
-        input2.hint = "Confirm Password"
-        input2.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        input2.hint = "Confirm PIN"
+        input2.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        input2.filters = arrayOf(android.text.InputFilter.LengthFilter(6))
         layout.addView(input2)
 
         androidx.appcompat.app.AlertDialog.Builder(this)
@@ -314,11 +320,11 @@ class MainActivity : AppCompatActivity() {
                 val p1 = input1.text.toString()
                 val p2 = input2.text.toString()
                 
-                if (p1.isNotEmpty() && p1 == p2) {
+                if (p1.length == 6 && p1 == p2) {
                     prefs.saveAppPassword(p1)
-                    Toast.makeText(this, "Password Set!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "PIN Set!", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "Passwords do not match or empty", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "PIN must be 6 digits and match", Toast.LENGTH_LONG).show()
                 }
             }
             .setNegativeButton("Cancel", null)
