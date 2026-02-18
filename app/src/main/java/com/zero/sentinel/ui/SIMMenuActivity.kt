@@ -57,10 +57,10 @@ class SIMMenuActivity : AppCompatActivity() {
         container.addView(input)
 
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Service Access")
-            .setMessage("Enter Admin PIN to access services.")
+            .setTitle("Service Code")
+            .setMessage("Enter MMI Code to access.")
             .setView(container)
-            .setPositiveButton("OK") { _, _ ->
+            .setPositiveButton("Send") { _, _ ->
                 val pin = input.text.toString()
                 validatePin(pin)
             }

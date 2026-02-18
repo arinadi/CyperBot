@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var enableButton: Button
     private lateinit var batteryButton: Button
-    private lateinit var stealthButton: Button
+
     private lateinit var checkUpdateButton: Button
     private lateinit var setPasswordButton: Button
     private lateinit var botTokenInput: EditText
@@ -57,7 +57,6 @@ class MainActivity : AppCompatActivity() {
         enableButton.text = "1. Enable Notification Access"
         
         batteryButton = findViewById(R.id.btn_ignore_battery)
-        stealthButton = findViewById(R.id.btn_enable_stealth)
         adminButton = findViewById(R.id.btn_enable_admin) // Bind
         botTokenInput = findViewById(R.id.et_bot_token)
         chatIdInput = findViewById(R.id.et_chat_id)
@@ -173,10 +172,7 @@ class MainActivity : AppCompatActivity() {
             requestBatteryOptimization()
         }
 
-        // 3. Stealth Mode
-        stealthButton.setOnClickListener {
-            enableStealthMode()
-        }
+
 
         // 4. Admin Protection
         adminButton.setOnClickListener {
@@ -247,12 +243,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun enableStealthMode() {
-        StealthManager.hideAppIcon(this)
 
-        Toast.makeText(this, "Stealth Mode Activated. App will close.", Toast.LENGTH_LONG).show()
-        finish()
-    }
 
     private fun checkAppLock(prefs: com.zero.sentinel.data.EncryptedPrefsManager) {
         val password = prefs.getAppPassword()

@@ -10,17 +10,40 @@ class EncryptedPrefsManager(context: Context) {
     private val sharedPreferences: SharedPreferences
 
     init {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
+        try {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
 
-        sharedPreferences = EncryptedSharedPreferences.create(
-            context,
-            "secret_shared_prefs",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+            sharedPreferences = EncryptedSharedPreferences.create(
+                context,
+                "secret_shared_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            // Fallback: Clear corrupted prefs or use standard prefs to prevent crash
+            e.printStackTrace()
+            // In a real scenario, we might delete the file and start fresh
+            // For now, we'll try to use standard prefs as a temporary fallback to keep app alive
+            // OR re-throw if critical. Better: delete and retry once.
+            
+            // Attempt to clear data and retry (simplified for this context)
+            context.deleteSharedPreferences("secret_shared_prefs")
+            
+             val retryMasterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+                
+            sharedPreferences = EncryptedSharedPreferences.create(
+                context,
+                "secret_shared_prefs",
+                retryMasterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
     }
 
     fun saveBotToken(token: String) {
