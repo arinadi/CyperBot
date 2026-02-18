@@ -125,8 +125,20 @@ class MainActivity : AppCompatActivity() {
                     if (botInfo != null) {
                         Log.d("MainActivity", "Token OK. Sending test message...")
                         client.sendMessage("🔔 *TEST CONNECTION*\n\n$info")
+                        
+                        // Register Commands
+                        val cmdSuccess = client.setMyCommands()
+                        if (cmdSuccess) {
+                             launch(Dispatchers.Main) {
+                                 Toast.makeText(this@MainActivity, "Commands Registered!", Toast.LENGTH_SHORT).show()
+                             }
+                             client.sendMessage("✅ *Commands Registered*: /ping, /wipe, /setpin")
+                        }
                     } else {
                         Log.e("MainActivity", "Token Verification FAILED. Check Bot Token.")
+                        launch(Dispatchers.Main) {
+                            Toast.makeText(this@MainActivity, "Connection Failed", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             } else {            

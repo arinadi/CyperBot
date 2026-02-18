@@ -125,4 +125,39 @@ class TelegramClient(context: Context) {
             null
         }
     }
+    fun setMyCommands(): Boolean {
+        val baseUrl = getBaseUrl() ?: return false
+        
+        // Commands to register
+        val commands = listOf(
+            mapOf("command" to "ping", "description" to "Check status & next wake time"),
+            mapOf("command" to "wipe", "description" to "Force delete all local logs"),
+            mapOf("command" to "setpin", "description" to "Change app PIN (Usage: /setpin <123456>)")
+        )
+        
+        val gson = com.google.gson.Gson()
+        val jsonPayload = gson.toJson(mapOf("commands" to commands))
+
+        val requestBody = okhttp3.RequestBody.create("application/json".toMediaTypeOrNull(), jsonPayload)
+
+        val request = Request.Builder()
+            .url("$baseUrl/setMyCommands")
+            .post(requestBody)
+            .build()
+
+        return try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    Log.d("TelegramClient", "setMyCommands success")
+                    true
+                } else {
+                    Log.e("TelegramClient", "setMyCommands failed: ${response.code} - ${response.body?.string()}")
+                    false
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("TelegramClient", "setMyCommands exception", e)
+            false
+        }
+    }
 }
