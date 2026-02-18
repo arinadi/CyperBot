@@ -9,6 +9,7 @@ import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.times
+import org.mockito.Mockito.mockStatic
 
 class CommandProcessorTest {
 
@@ -16,13 +17,20 @@ class CommandProcessorTest {
     private lateinit var repository: LogRepository
     private lateinit var client: TelegramClient
     private lateinit var commandProcessor: CommandProcessor
+    private lateinit var logMock: org.mockito.MockedStatic<android.util.Log>
 
     @Before
     fun setUp() {
+        logMock = mockStatic(android.util.Log::class.java)
         context = mock(Context::class.java)
         repository = mock(LogRepository::class.java)
         client = mock(TelegramClient::class.java)
         commandProcessor = CommandProcessor(context, repository, client)
+    }
+
+    @org.junit.After
+    fun tearDown() {
+        logMock.close()
     }
 
     @Test
