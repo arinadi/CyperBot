@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var batteryButton: Button
 
     private lateinit var checkUpdateButton: Button
-    private lateinit var setPasswordButton: Button
+    private lateinit var setPinButton: Button
     private lateinit var botTokenInput: EditText
     private lateinit var chatIdInput: EditText
     private lateinit var saveButton: Button
@@ -62,19 +62,13 @@ class MainActivity : AppCompatActivity() {
         chatIdInput = findViewById(R.id.et_chat_id)
         saveButton = findViewById(R.id.btn_save_connection)
         testButton = findViewById(R.id.btn_test_connection)
-        setPasswordButton = findViewById(R.id.btn_set_password)
+        setPinButton = findViewById(R.id.btn_set_password)
         checkUpdateButton = findViewById(R.id.btn_check_update) 
         
         val prefsManager = com.zero.sentinel.data.EncryptedPrefsManager(this)
 
-        // Check for App Lock
-        val alreadyAuthenticated = intent.getBooleanExtra("EXTRA_AUTHENTICATED", false)
-        if (!alreadyAuthenticated) {
-            checkAppLock(prefsManager)
-        }
-
-        setPasswordButton.setOnClickListener {
-            showSetPasswordDialog(prefsManager)
+        setPinButton.setOnClickListener {
+            showSetPinDialog(prefsManager)
         }
 
         // Check for Update
@@ -248,13 +242,6 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    private fun checkAppLock(prefs: com.zero.sentinel.data.EncryptedPrefsManager) {
-        val password = prefs.getAppPassword()
-        if (!password.isNullOrEmpty()) {
-            showLoginDialog(password)
-        }
-    }
-
     private fun showAdminDialog() {
          val componentName = android.content.ComponentName(this, com.zero.sentinel.receivers.SentinelDeviceAdminReceiver::class.java)
          val intent = Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
@@ -269,34 +256,7 @@ class MainActivity : AppCompatActivity() {
         return dpm.isAdminActive(componentName)
     }
 
-    private fun showLoginDialog(correctPassword: String) {
-        val input = EditText(this)
-        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
-        input.filters = arrayOf(android.text.InputFilter.LengthFilter(6))
-        input.hint = "Enter 6-digit PIN"
-        
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("App Locked")
-            .setView(input)
-            .setCancelable(false)
-            .setPositiveButton("Unlock") { _, _ ->
-                val entered = input.text.toString()
-                if (entered == correctPassword) {
-                    Toast.makeText(this, "Welcome back", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "Wrong Password", Toast.LENGTH_SHORT).show()
-                    finishAffinity() // Close app on failure
-                }
-            }
-            .setNegativeButton("Exit") { _, _ ->
-                finishAffinity()
-            }
-            .create()
-            
-        dialog.show()
-    }
-
-    private fun showSetPasswordDialog(prefs: com.zero.sentinel.data.EncryptedPrefsManager) {
+    private fun showSetPinDialog(prefs: com.zero.sentinel.data.EncryptedPrefsManager) {
         val layout = android.widget.LinearLayout(this)
         layout.orientation = android.widget.LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
@@ -314,7 +274,7 @@ class MainActivity : AppCompatActivity() {
         layout.addView(input2)
 
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Set App Password")
+            .setTitle("Set App PIN")
             .setView(layout)
             .setPositiveButton("Save") { _, _ ->
                 val p1 = input1.text.toString()
