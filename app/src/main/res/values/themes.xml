@@ -23,4 +23,19 @@
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:textColorSecondary">@color/slate_400</item>
     </style>
+
+    <!-- Dark Dialog Theme -->
+    <style name="Theme.ZeroSentinel.Dialog" parent="Theme.MaterialComponents.Dialog.Alert">
+        <item name="colorPrimary">@color/indigo_accent</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowBackground">@color/slate_900</item>
+        <item name="android:colorBackground">@color/slate_900</item>
+        <item name="android:textColor">@color/slate_300</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.ZeroSentinel.Button.Positive</item>
+    </style>
+
+    <style name="Widget.ZeroSentinel.Button.Positive" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/indigo_accent</item>
+    </style>
 </resources>

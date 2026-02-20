@@ -4,17 +4,22 @@
         <item
             android:id="@+id/nav_dashboard"
             android:icon="@android:drawable/ic_menu_today"
-            android:title="Dashboard"
+            android:title="@string/nav_dashboard"
             android:checked="true" />
         
         <item
             android:id="@+id/nav_security"
             android:icon="@android:drawable/ic_lock_idle_lock"
-            android:title="Security" />
+            android:title="@string/nav_security" />
+
+        <item
+            android:id="@+id/nav_update"
+            android:icon="@android:drawable/stat_sys_download"
+            android:title="@string/nav_update" />
 
         <item
             android:id="@+id/nav_settings"
             android:icon="@android:drawable/ic_menu_preferences"
-            android:title="Settings" />
+            android:title="@string/nav_settings" />
     </group>
 </menu>

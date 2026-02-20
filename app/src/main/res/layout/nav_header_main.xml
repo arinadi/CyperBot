@@ -12,12 +12,14 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:src="@drawable/ic_sim_menu" 
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
         android:layout_marginBottom="16dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Zero Sentinel"
+        android:text="@string/nav_header_title"
         android:textColor="@color/white"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -25,8 +27,16 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="System Monitor - Dark Mode"
+        android:text="@string/nav_header_subtitle"
         android:textColor="@color/indigo_accent"
         android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/tv_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/slate_500"
+        android:textSize="11sp"
+        android:layout_marginTop="4dp" />
 
 </LinearLayout>

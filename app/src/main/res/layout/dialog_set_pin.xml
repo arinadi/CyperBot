@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- PIN Icon -->
+    <ImageView
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@android:drawable/ic_lock_idle_lock"
+        android:layout_marginBottom="16dp"
+        android:importantForAccessibility="no"
+        android:contentDescription="@null" />
+
+    <!-- Label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pin_dialog_title"
+        android:textColor="@color/slate_300"
+        android:textSize="12sp"
+        android:textAllCaps="true"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="12dp"
+        android:layout_gravity="center_horizontal" />
+
+    <!-- New PIN Input -->
+    <EditText
+        android:id="@+id/et_pin_new"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/bg_input_dark"
+        android:hint="@string/pin_dialog_new_hint"
+        android:importantForAutofill="no"
+        android:textColorHint="@color/slate_500"
+        android:textColor="@color/slate_300"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textSize="16sp"
+        android:letterSpacing="0.3"
+        android:gravity="center"
+        android:maxLength="6"
+        android:inputType="numberPassword"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Confirm PIN Input -->
+    <EditText
+        android:id="@+id/et_pin_confirm"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/bg_input_dark"
+        android:hint="@string/pin_dialog_confirm_hint"
+        android:importantForAutofill="no"
+        android:textColorHint="@color/slate_500"
+        android:textColor="@color/slate_300"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textSize="16sp"
+        android:letterSpacing="0.3"
+        android:gravity="center"
+        android:maxLength="6"
+        android:inputType="numberPassword" />
+
+</LinearLayout>
