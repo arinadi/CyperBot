@@ -8,6 +8,7 @@ class ZeroSentinelApp : Application() {
 
     val database by lazy { AppDatabase.getDatabase(this) }
     val repository by lazy { LogRepository(database.logDao()) }
+    val prefsManager by lazy { com.zero.sentinel.data.EncryptedPrefsManager(this) }
 
     override fun onCreate() {
         super.onCreate()

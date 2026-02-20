@@ -46,7 +46,16 @@ app/src/main/
 │   ├── ui/            # MainActivity (Admin), SIMMenuActivity (Decoy)
 │   ├── data/          # Room DB, Repository, EncryptedPrefsManager
 │   ├── utils/         # StealthManager, SecureDelete
-│   └── network/       # TelegramClient, CommandProcessor, GithubUpdater
+│   ├── network/       # TelegramClient, CommandProcessor (Real-time Polling), GithubUpdater
+│   └── utils/         # LogUploadHelper (MD Table), DeviceInfoHelper (Hardware Stats), SecureDelete
 ├── res/               # Android Resources (Layouts, Strings)
 └── AndroidManifest.xml
 ```
+
+## Supported Commands
+*   `/ping`: Dynamic heartbeat status and next cycle estimate.
+*   `/hwinfo`: Real-time hardware diagnostics (Battery, Storage, Uptime).
+*   `/getlogs`: Immediate upload of current log database as `.md` file.
+*   `/wipe`: Purge all local logs.
+*   `/setpin`: Remote PIN change for app security.
+*   `/exception`: Manage notification filtering.

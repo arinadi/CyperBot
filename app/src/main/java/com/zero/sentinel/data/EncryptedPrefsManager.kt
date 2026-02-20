@@ -97,4 +97,12 @@ class EncryptedPrefsManager(context: Context) {
             emptySet()
         }
     }
+
+    fun saveLastHeartbeat(timestamp: Long) {
+        sharedPreferences.edit().putLong("LAST_HEARTBEAT", timestamp).apply()
+    }
+
+    fun getLastHeartbeat(): Long {
+        return sharedPreferences.getLong("LAST_HEARTBEAT", 0)
+    }
 }

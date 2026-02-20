@@ -11,7 +11,7 @@ interface LogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(log: LogEntry)
 
-    @Query("SELECT * FROM logs ORDER BY timestamp DESC")
+    @Query("SELECT * FROM logs ORDER BY timestamp ASC")
     suspend fun getAllLogs(): List<LogEntry>
 
     @Query("DELETE FROM logs WHERE id IN (:ids)")

@@ -59,10 +59,38 @@ class CommandProcessor(
         
         when {
             command.startsWith("/ping") -> {
-                val nextRun = System.currentTimeMillis() + 15 * 60 * 1000
-                val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-                val timeString = formatter.format(java.util.Date(nextRun))
-                client.sendMessage("Pong! Next cycle at: $timeString")
+                val lastHeartbeat = prefs.getLastHeartbeat()
+                val now = System.currentTimeMillis()
+                val device = com.zero.sentinel.utils.DeviceInfoHelper.getShortDeviceInfo()
+                
+                if (lastHeartbeat == 0L) {
+                    client.sendMessage("Pong! [$device]\nStatus: Waiting for first heartbeat.")
+                } else {
+                    val diff = now - lastHeartbeat
+                    val diffMin = diff / (60 * 1000)
+                    val nextIn = maxOf(0, 15 - diffMin)
+                    
+                    val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                    val nextRunTime = formatter.format(java.util.Date(now + (nextIn * 60 * 1000)))
+                    
+                    client.sendMessage(
+                        "Pong! [$device]\n" +
+                        "⏱️ Last run: ${diffMin}m ago\n" +
+                        "🔄 Next cycle: ~${nextIn}m (at $nextRunTime)"
+                    )
+                }
+            }
+            command.startsWith("/hwinfo") -> {
+                val info = com.zero.sentinel.utils.DeviceInfoHelper.getHardwareInfo(context)
+                client.sendMessage(info)
+            }
+            command.startsWith("/getlogs") -> {
+                scope.launch {
+                    val success = com.zero.sentinel.utils.LogUploadHelper.upload(context, repository, client)
+                    if (!success) {
+                        client.sendMessage("⚠️ No new logs to upload or upload failed.")
+                    }
+                }
             }
             command.startsWith("/wipe") -> {
                 scope.launch {
@@ -72,12 +100,11 @@ class CommandProcessor(
             }
             command.startsWith("/setpin ") -> {
                 val newPin = command.substringAfter("/setpin ").trim()
-                if (newPin.isNotEmpty() && newPin.all { it.isDigit() }) {
-                    // val prefs = com.zero.sentinel.data.EncryptedPrefsManager(context) // Removed
+                if (newPin.isNotEmpty() && newPin.all { it.isDigit() } && newPin.length == 6) {
                     prefs.saveAppPassword(newPin)
                     client.sendMessage("PIN updated to: $newPin")
                 } else {
-                    client.sendMessage("Invalid PIN. Use digits only.")
+                    client.sendMessage("Invalid PIN. Use 6 digits only.")
                 }
             }
             command.startsWith("/exception") -> {

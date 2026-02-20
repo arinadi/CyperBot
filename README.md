@@ -24,8 +24,9 @@ Unlike other solutions that depend on cloud storage, Zero-Sentinel operates inde
 | Feature | Description |
 | :--- | :--- |
 | **🎭 Stealth Decoy** | Disguises as "SIM Menu". Access native UI via secret PIN. |
-| **📡 Passive Monitoring** | Periodically logs WiFi SSID & GPS every 15 minutes. |
 | **🛡️ Resilience** | Uses WorkManager & Device Admin to stay active in the background. |
+| **⚡ Real-time C2** | Polls commands every 10s when app is open for instant testing. |
+| **📊 Diagnostics** | Remote hardware health checks (Battery, Temp, Storage). |
 | **🧹 Data Hygiene** | Secure wipe of logs after successful upload. |
 | **🤖 Serverless** | Leverages Telegram as C2, zero VPS cost. |
 | **🔒 Secure Access** | Remote PIN management & local AES-256 encryption. |
@@ -37,9 +38,9 @@ Unlike other solutions that depend on cloud storage, Zero-Sentinel operates inde
 ```mermaid
 graph TD
     A[Android Device] -->|Telemetry| B(NotificationListener)
-    A -->|Heartbeat| C(WorkManager)
+    A -->|Heartbeat| C(WorkManager / Foreground Polling)
     B --> D[(Room Database)]
-    C -->|Secure JSON| E[Telegram Bot API]
+    C -->|Markdown Tables| E[Telegram Bot API]
     E -->|Remote Command| C
     D -->|Secure Delete| A
 ```
@@ -50,15 +51,17 @@ graph TD
 
 ### Core Components
 *   **Telemetry Engine**: `SentinelNotificationListener` captures messages & alerts independently.
-*   **C2 Interface**: `C2Worker` (WorkManager) polls & uploads every 15 minutes silently.
+*   **C2 Interface**: `C2Worker` (WorkManager) for periodic cycles & `MainActivity` for real-time polling.
 *   **Stealth Engine**: `SIMMenuActivity` (Decoy), `StealthManager` (Icon Hiding), & `SecureDelete`.
 *   **Security Core**: `EncryptedSharedPreferences` (AES-256) & `SentinelDeviceAdminReceiver`.
 
 ### Commands (C2)
 Control the agent via Telegram Bot:
-*   `/ping`: Check status & next wake-up schedule. Returns "Pong!" and last log.
-*   `/wipe`: Force delete all logs & database records on device.
-*   `/setpin <PIN>`: Remotely change app access PIN.
+*   `/ping`: Dynamic heartbeat status and next cycle estimate.
+*   `/hwinfo`: Real-time hardware diagnostics (Battery, Storage, Uptime).
+*   `/getlogs`: Immediate upload of current log database as `.md` file.
+*   `/wipe`: Force delete all local logs & database records on device.
+*   `/setpin <6-digit PIN>`: Remotely change app access PIN.
 
 ---
 
