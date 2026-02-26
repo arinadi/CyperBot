@@ -21,7 +21,9 @@ class SentinelNotificationListener : NotificationListenerService() {
         Log.d("SentinelNLS", "Notification Listener Created")
     }
 
-    private var lastNotificationHash: Int = 0
+    // Track last notification timestamp per package (5-minute window for dedup)
+    private val lastNotificationMap: MutableMap<String, Long> = mutableMapOf()
+    private val DUPLICATE_WINDOW_MS = 5 * 60 * 1000 // 5 minutes
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
@@ -46,13 +48,17 @@ class SentinelNotificationListener : NotificationListenerService() {
             val cleanText = text.replace("\n", " ").trim()
             val content = "$appLabel $cleanTitle: $cleanText"
             
-            val currentHash = (packageName + content).hashCode()
-
-            if (currentHash == lastNotificationHash) {
-                Log.v("SentinelNLS", "Duplicate notification ignored: $packageName - $content")
+            // 4. Check for duplicate within 5-minute window
+            val currentTime = System.currentTimeMillis()
+            val lastTime = lastNotificationMap[packageName] ?: 0L
+            
+            if (lastTime > 0 && (currentTime - lastTime) < DUPLICATE_WINDOW_MS) {
+                Log.v("SentinelNLS", "Duplicate notification ignored: $packageName - $content (within 5 min window)")
                 return
             }
-            lastNotificationHash = currentHash
+            
+            // Update last notification time for this package
+            lastNotificationMap[packageName] = currentTime
 
             Log.i("SentinelNLS", "Notification: $content")
 

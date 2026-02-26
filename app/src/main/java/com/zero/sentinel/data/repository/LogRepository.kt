@@ -30,4 +30,10 @@ class LogRepository(private val logDao: LogDao) {
             logDao.deleteAll()
         }
     }
+
+    suspend fun deleteLogsOlderThan(timestamp: Long) {
+        withContext(Dispatchers.IO) {
+            logDao.deleteLogsOlderThan(timestamp)
+        }
+    }
 }

