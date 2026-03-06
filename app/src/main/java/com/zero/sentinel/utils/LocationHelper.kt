@@ -87,13 +87,12 @@ object LocationHelper {
         val lon = location.longitude
         val acc = location.accuracy
         
+        val mapUrl = "https://www.google.com/maps/search/?api=1&query=$lat,$lon"
+        
         return """
-            📍 *Location Retreived*
-            Lat: `$lat`
-            Lon: `$lon`
+            📍 *Location Retrieved*
+            Coordinates: [$lat, $lon]($mapUrl)
             Accuracy: `${acc}m`
-            
-            🗺 [Open in Google Maps](https://www.google.com/maps/search/?api=1&query=$lat,$lon)
         """.trimIndent()
     }
 }
