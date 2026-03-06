@@ -88,7 +88,11 @@ class CommandProcessor(
     }
 
     private fun handleFetchCommand(command: String) {
-        val arg = command.substringAfter("/fetch").trim().lowercase()
+        val arg = if ("_" in command) {
+            command.substringAfter("_").trim().lowercase()
+        } else {
+            command.substringAfter("/fetch").trim().lowercase()
+        }
         
         when (arg) {
             "loc", "location" -> {
@@ -117,9 +121,14 @@ class CommandProcessor(
     }
 
     private fun handleConfigCommand(command: String) {
-        val parts = command.split(" ")
-        val action = parts.getOrNull(1)?.lowercase()
-        val target = parts.getOrNull(2)
+        val action = if ("_" in command) {
+             command.substringAfter("_").substringBefore(" ").trim().lowercase()
+        } else {
+             val parts = command.split(" ")
+             parts.getOrNull(1)?.lowercase()
+        }
+        
+        val target = command.split(" ").getOrNull(if ("_" in command) 1 else 2)
 
         when (action) {
             "wipe" -> {
