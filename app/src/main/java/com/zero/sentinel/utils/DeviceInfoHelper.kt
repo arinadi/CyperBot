@@ -38,9 +38,11 @@ object DeviceInfoHelper {
         return sb.toString()
     }
     
-    fun getHardwareInfo(context: android.content.Context): String {
+    fun getDeviceStats(context: android.content.Context): String {
         val sb = StringBuilder()
-        sb.append("🛡️ **HARDWARE STATUS**\n\n")
+        sb.append("📱 **DEVICE STATUS**\n")
+        sb.append("Model: ${Build.MANUFACTURER} ${Build.MODEL}\n")
+        sb.append("OS: Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n\n")
 
         try {
             // --- Battery ---
@@ -49,57 +51,45 @@ object DeviceInfoHelper {
             
             if (batteryStatus != null) {
                 val level = batteryStatus.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
-                val scale = batteryStatus.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, -1)
                 val status = batteryStatus.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1)
-                val health = batteryStatus.getIntExtra(android.os.BatteryManager.EXTRA_HEALTH, -1)
-                val temp = batteryStatus.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, -1) / 10.0
                 
                 val statusStr = when (status) {
                     android.os.BatteryManager.BATTERY_STATUS_CHARGING -> "Charging ⚡"
-                    android.os.BatteryManager.BATTERY_STATUS_DISCHARGING -> "Discharging"
-                    android.os.BatteryManager.BATTERY_STATUS_FULL -> "Full"
+                    android.os.BatteryManager.BATTERY_STATUS_DISCHARGING -> "Unplugged"
+                    android.os.BatteryManager.BATTERY_STATUS_FULL -> "Full 🔋"
                     android.os.BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "Not Charging"
                     else -> "Unknown"
                 }
-
-                val healthStr = when (health) {
-                    android.os.BatteryManager.BATTERY_HEALTH_GOOD -> "Good ✅"
-                    android.os.BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat 🔥"
-                    android.os.BatteryManager.BATTERY_HEALTH_DEAD -> "Dead 💀"
-                    android.os.BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
-                    else -> "Average"
-                }
-
                 sb.append("🔋 **Battery**: $level% ($statusStr)\n")
-                sb.append("🌡️ **Temp**: $temp°C | Health: $healthStr\n\n")
             }
 
-            // --- Storage ---
-            val stat = android.os.StatFs(android.os.Environment.getDataDirectory().path)
-            val blockSize = stat.blockSizeLong
-            val totalBlocks = stat.blockCountLong
-            val availableBlocks = stat.availableBlocksLong
-            
-            val totalSize = (totalBlocks * blockSize) / (1024 * 1024 * 1024).toDouble()
-            val freeSize = (availableBlocks * blockSize) / (1024 * 1024 * 1024).toDouble()
-            
-            sb.append("💾 **Storage**: ${String.format("%.2f", freeSize)} GB free / ${String.format("%.2f", totalSize)} GB total\n")
+            // --- Network ---
+            val cm = context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            val activeNetwork = cm.activeNetworkInfo
+            if (activeNetwork != null && activeNetwork.isConnected) {
+                if (activeNetwork.type == android.net.ConnectivityManager.TYPE_WIFI) {
+                    val wm = context.applicationContext.getSystemService(android.content.Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+                    val info = wm.connectionInfo
+                    val ssid = info.ssid?.replace("\"", "") ?: "Unknown SSID"
+                    sb.append("🛜 **Network**: Wi-Fi ($ssid)\n")
+                } else if (activeNetwork.type == android.net.ConnectivityManager.TYPE_MOBILE) {
+                    sb.append("🛜 **Network**: Cellular Data\n")
+                } else {
+                    sb.append("🛜 **Network**: Connected (${activeNetwork.typeName})\n")
+                }
+            } else {
+                sb.append("🛜 **Network**: Disconnected\n")
+            }
 
-            // --- RAM ---
-            val actManager = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-            val memInfo = android.app.ActivityManager.MemoryInfo()
-            actManager.getMemoryInfo(memInfo)
-            val totalMem = memInfo.totalMem / (1024 * 1024)
-            val availMem = memInfo.availMem / (1024 * 1024)
-            sb.append("🧠 **RAM**: $availMem MB free / $totalMem MB\n\n")
-
-            // --- Uptime ---
-            val uptimeMillis = android.os.SystemClock.elapsedRealtime()
-            val days = uptimeMillis / (24 * 3600 * 1000)
-            val hours = (uptimeMillis % (24 * 3600 * 1000)) / (3600 * 1000)
-            val minutes = (uptimeMillis % (3600 * 1000)) / (60 * 1000)
-            
-            sb.append("⏱️ **Uptime**: ${days}d ${hours}h ${minutes}m\n")
+            // --- Ringer Mode ---
+            val am = context.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
+            val ringerStr = when (am.ringerMode) {
+                android.media.AudioManager.RINGER_MODE_SILENT -> "Silent 🔇"
+                android.media.AudioManager.RINGER_MODE_VIBRATE -> "Vibrate 📳"
+                android.media.AudioManager.RINGER_MODE_NORMAL -> "Normal 🔊"
+                else -> "Unknown"
+            }
+            sb.append("🔕 **Sound Profile**: $ringerStr\n")
 
         } catch (e: Exception) {
             sb.append("⚠️ **Diagnostics Error**: ${e.message}\n")

@@ -131,9 +131,9 @@ class TelegramClient(context: Context) {
         
         // Commands to register
         val commands = listOf(
-            mapOf("command" to "ping", "description" to "Check status & next wake time"),
-            mapOf("command" to "wipe", "description" to "Force delete all local logs"),
-            mapOf("command" to "setpin", "description" to "Change app PIN (Usage: /setpin <123456>)")
+            mapOf("command" to "stat", "description" to "Device Health & Info (Battery, Net, HW)"),
+            mapOf("command" to "fetch", "description" to "Pull data (loc, logs, all)"),
+            mapOf("command" to "config", "description" to "Manage settings (wipe, pin, exc)")
         )
         
         val gson = com.google.gson.Gson()

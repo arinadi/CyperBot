@@ -237,6 +237,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissionsAndTest() {
+        if (!isNotificationServiceEnabled()) {
+            Toast.makeText(this, "Please enable Notification Access first", Toast.LENGTH_LONG).show()
+            requestNotificationAccess()
+            return
+        }
+        
+        if (!isIgnoringBatteryOptimizations()) {
+            Toast.makeText(this, "Please disable Battery Optimization first", Toast.LENGTH_LONG).show()
+            requestBatteryOptimization()
+            return
+        }
+        
+        if (!isAdminActive()) {
+            Toast.makeText(this, "Please activate Device Admin first", Toast.LENGTH_LONG).show()
+            requestAdmin()
+            return
+        }
+
         // Request dynamic dangerous permissions
         val permissions = getRequiredPermissions()
         val notGranted = permissions.filter {
