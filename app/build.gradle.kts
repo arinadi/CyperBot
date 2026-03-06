@@ -38,7 +38,7 @@ android {
         val commitHash = getGitCommitHash()
 
         versionCode = commitCount
-        versionName = "2.$commitCount.$commitHash"
+        versionName = "3.$commitCount.$commitHash"
 
 
         
@@ -51,9 +51,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("release.jks")
-            storePassword = System.getenv("SIGNING_STORE_PASSWORD")
-            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
-            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: "123456"
+            keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: "key"
+            keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: "123456"
         }
     }
 
@@ -117,3 +117,4 @@ dependencies {
 
 
 }
+dependencies { implementation("com.google.android.gms:play-services-location:21.2.0") }

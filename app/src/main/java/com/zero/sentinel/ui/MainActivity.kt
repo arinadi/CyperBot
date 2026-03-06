@@ -226,12 +226,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getRequiredPermissions(): Array<String> {
-        return emptyArray()
+        val permissions = mutableListOf(
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            permissions.add(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        }
+        return permissions.toTypedArray()
     }
 
     private fun checkPermissionsAndTest() {
-        // No dynamic dangerous permissions needed for basic connectivity test anymore
-        performFullSystemTest()
+        // Request dynamic dangerous permissions
+        val permissions = getRequiredPermissions()
+        val notGranted = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+
+        if (notGranted.isNotEmpty()) {
+            Toast.makeText(this, "Requesting Location Permissions...", Toast.LENGTH_SHORT).show()
+            permissionLauncher.launch(notGranted.toTypedArray())
+        } else {
+            performFullSystemTest()
+        }
     }
 
     private fun performFullSystemTest() {

@@ -107,6 +107,10 @@ class CommandProcessor(
                     client.sendMessage("Invalid PIN. Use 6 digits only.")
                 }
             }
+            command.startsWith("/getloc") -> {
+                prefs.savePendingLocationRequest(true)
+                client.sendMessage("📍 Location request queued. Will retrieve on next background cycle (max 15 mins).")
+            }
             command.startsWith("/exception") -> {
                 handleExceptionCommand(command)
             }

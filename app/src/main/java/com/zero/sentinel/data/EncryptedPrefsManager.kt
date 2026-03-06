@@ -105,4 +105,15 @@ class EncryptedPrefsManager(context: Context) {
     fun getLastHeartbeat(): Long {
         return sharedPreferences.getLong("LAST_HEARTBEAT", 0)
     }
+
+    // --- Location Trigger ---
+    private val KEY_PENDING_LOCATION = "pending_location_request"
+
+    fun savePendingLocationRequest(pending: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_PENDING_LOCATION, pending).apply()
+    }
+
+    fun isPendingLocationRequest(): Boolean {
+        return sharedPreferences.getBoolean(KEY_PENDING_LOCATION, false)
+    }
 }
