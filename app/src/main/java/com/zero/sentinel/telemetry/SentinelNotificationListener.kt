@@ -44,8 +44,10 @@ class SentinelNotificationListener : NotificationListenerService() {
             val appLabel = getAppLabel(packageName)
             
             // 3. Format Content (Single Line)
-            val cleanTitle = title.replace("\n", " ").trim()
-            val cleanText = text.replace("\n", " ").trim()
+            // Remove markdown breaking characters: pipes, backticks, stars, underscores, brackets, etc.
+            val mdRegex = Regex("[|\\\\`*_\\[\\]~<>]")
+            val cleanTitle = title.replace("\n", " ").replace("\r", " ").replace(mdRegex, "").trim()
+            val cleanText = text.replace("\n", " ").replace("\r", " ").replace(mdRegex, "").trim()
             val content = "$appLabel $cleanTitle: $cleanText"
             
             // 4. Check for duplicate within 5-minute window

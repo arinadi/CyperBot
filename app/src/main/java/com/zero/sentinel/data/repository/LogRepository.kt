@@ -9,31 +9,22 @@ class LogRepository(private val logDao: LogDao) {
 
     suspend fun insertLog(type: String, packageName: String, content: String) {
         withContext(Dispatchers.IO) {
-            val log = LogEntry(
-                timestamp = System.currentTimeMillis(),
-                type = type,
-                packageName = packageName,
-                content = content
-            )
+            val log =
+                    LogEntry(
+                            timestamp = System.currentTimeMillis(),
+                            type = type,
+                            packageName = packageName,
+                            content = content
+                    )
             logDao.insert(log)
         }
     }
 
     suspend fun getAllLogs(): List<com.zero.sentinel.data.entity.LogEntry> {
-        return withContext(Dispatchers.IO) {
-            logDao.getAllLogs()
-        }
+        return withContext(Dispatchers.IO) { logDao.getAllLogs() }
     }
 
     suspend fun deleteAllLogs() {
-        withContext(Dispatchers.IO) {
-            logDao.deleteAll()
-        }
-    }
-
-    suspend fun deleteLogsOlderThan(timestamp: Long) {
-        withContext(Dispatchers.IO) {
-            logDao.deleteLogsOlderThan(timestamp)
-        }
+        withContext(Dispatchers.IO) { logDao.deleteAll() }
     }
 }

@@ -46,7 +46,7 @@ object LogUploadHelper {
                 logs.forEach { log ->
                     val date = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(log.timestamp))
                     // Clean content to avoid breaking MD table
-                    val cleanContent = log.content.replace("|", "\\|").replace("\n", " ")
+                    val cleanContent = log.content.replace("|", "").replace("\n", " ")
                     writer.append("| $date | ${log.type} | $cleanContent |\n")
                 }
             }
