@@ -129,14 +129,18 @@ class TelegramClient(context: Context) {
     fun setMyCommands(): Boolean {
         val baseUrl = getBaseUrl() ?: return false
         
-        // Commands to register (Telegram API doesn't support spaces in commands)
+        // Commands to register (Telegram API limit: up to 100 commands, 1-32 chars, a-z, 0-9, _)
         val commands = listOf(
             mapOf("command" to "stat", "description" to "Device Health (Battery, Net, HW)"),
             mapOf("command" to "fetch_loc", "description" to "Queue location update"),
             mapOf("command" to "fetch_logs", "description" to "Force upload local logs"),
             mapOf("command" to "fetch_all", "description" to "Fetch logs and location"),
             mapOf("command" to "config_wipe", "description" to "Delete all local logs on device"),
-            mapOf("command" to "config", "description" to "Manual config commands (pin/exceptions)")
+            mapOf("command" to "config_pin", "description" to "Usage: /config_pin <6_digits>"),
+            mapOf("command" to "config_exc_list", "description" to "List notification exceptions"),
+            mapOf("command" to "config_exc_add", "description" to "Usage: /config_exc_add <pkg>"),
+            mapOf("command" to "config_exc_del", "description" to "Usage: /config_exc_del <pkg>"),
+            mapOf("command" to "config_exc_wipe", "description" to "Clear all exceptions")
         )
         
         val gson = com.google.gson.Gson()

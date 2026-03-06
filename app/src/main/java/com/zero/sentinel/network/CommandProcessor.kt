@@ -122,11 +122,16 @@ class CommandProcessor(
 
     private fun handleConfigCommand(command: String) {
         val action = if ("_" in command) {
-             command.substringAfter("_").substringBefore(" ").trim().lowercase()
+             command.substringAfter("_").substringBefore("_").substringBefore(" ").trim().lowercase() // Gets "wipe", "pin", or "exc"
         } else {
              val parts = command.split(" ")
              parts.getOrNull(1)?.lowercase()
         }
+        
+        // For /config_exc_add <pkg>, the subaction is "add", and target is <pkg>
+        val subActionFromUnderscore = if ("_exc_" in command) {
+             command.substringAfter("_exc_").substringBefore(" ").trim().lowercase()
+        } else null
         
         val target = command.split(" ").getOrNull(if ("_" in command) 1 else 2)
 
@@ -146,7 +151,8 @@ class CommandProcessor(
                 }
             }
             "exc", "exception" -> {
-                handleExceptionSubCommand(target, parts.getOrNull(3))
+                val finalSubAction = subActionFromUnderscore ?: parts.getOrNull(3)
+                handleExceptionSubCommand(finalSubAction, target)
             }
             else -> {
                 client.sendMessage(
